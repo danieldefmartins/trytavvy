@@ -1,0 +1,18 @@
+{
+  "name": "trytavvy",
+  "version": "1.0.0",
+  "description": "Tavvy Launch Page - Welcome to the future of discovery",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["tavvy", "discovery", "professionals", "launch"],
+  "author": "Tavvy",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
