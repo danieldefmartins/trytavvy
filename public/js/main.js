@@ -1,46 +1,51 @@
-// Scroll animations
-const observerOptions = {
-    threshold: 0.1,
-    rootMargin: '0px 0px -50px 0px'
-};
-
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-        }
-    });
-}, observerOptions);
-
-// Observe all sections for fade-up animation
-document.addEventListener('DOMContentLoaded', () => {
-    const sections = document.querySelectorAll('.section');
-    sections.forEach(section => {
-        section.classList.add('fade-up');
-        observer.observe(section);
-    });
-    
+document.addEventListener("DOMContentLoaded", () => {
     // Smooth scroll for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
         });
     });
-});
 
-// Add parallax effect to hero
-window.addEventListener('scroll', () => {
-    const scrolled = window.pageYOffset;
-    const hero = document.querySelector('.hero-content');
-    if (hero && scrolled < window.innerHeight) {
-        hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-        hero.style.opacity = 1 - (scrolled / window.innerHeight);
+    // Founders Access Countdown
+    const spotsLeftEl = document.getElementById('spots-left');
+    const progressFillEl = document.getElementById('progress-fill');
+    
+    if (spotsLeftEl && progressFillEl) {
+        const totalSpots = 1000;
+        let spotsLeft = 768; // Starting number
+
+        const updateCountdown = () => {
+            const spotsTaken = totalSpots - spotsLeft;
+            const percentage = (spotsTaken / totalSpots) * 100;
+            spotsLeftEl.textContent = spotsLeft;
+            progressFillEl.style.width = `${percentage}%`;
+        };
+
+        // Simulate spots being taken
+        setInterval(() => {
+            if (spotsLeft > 200) { // Don't let it go to zero too fast
+                spotsLeft -= Math.floor(Math.random() * 3) + 1;
+                updateCountdown();
+            }
+        }, 5000); // Update every 5 seconds
+
+        updateCountdown();
     }
+    
+    // Scroll animations
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.section, .problem-card, .signal-item, .path-card, .founders-box').forEach(el => {
+        el.classList.add('fade-up');
+        observer.observe(el);
+    });
 });
