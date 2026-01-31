@@ -133,6 +133,41 @@ body {
     color: var(--gray-medium);
 }
 
+/* Stats Banner */
+.stats-banner {
+    background: linear-gradient(90deg, var(--teal), var(--blue));
+    padding: 48px 0;
+    text-align: center;
+}
+
+.stats-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.stats-number {
+    font-size: 64px;
+    font-weight: 800;
+    color: var(--white);
+    margin-bottom: 16px;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.stats-text {
+    font-size: 24px;
+    color: var(--white);
+    margin-bottom: 24px;
+    font-weight: 600;
+}
+
+.stats-cta {
+    font-size: 20px;
+    color: var(--yellow);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 /* Problem Section */
 .problem {
     background-color: var(--black);
