@@ -237,12 +237,13 @@ export default function LandingPage() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center">
+          <div className="flex items-center gap-3">
             <img 
               src="/images/tavvy-logo-new.png" 
               alt="Tavvy" 
               className="h-10 w-auto"
             />
+            <span className="hidden lg:block text-gray-400 text-sm italic border-l border-white/20 pl-3">The savvy way to discover.</span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <button onClick={() => scrollToSection('features')} className="text-gray-400 hover:text-white transition-colors">
@@ -681,11 +682,14 @@ export default function LandingPage() {
       <footer className="py-12 px-4 border-t border-white/10">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <img 
-              src="/images/tavvy-logo-new.png" 
-              alt="Tavvy" 
-              className="h-10 w-auto"
-            />
+            <div className="flex flex-col items-center md:items-start gap-2">
+              <img 
+                src="/images/tavvy-logo-new.png" 
+                alt="Tavvy" 
+                className="h-10 w-auto"
+              />
+              <span className="text-gray-400 text-sm italic">The savvy way to discover.</span>
+            </div>
             <div className="flex gap-6 text-gray-400 text-sm">
               <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
