@@ -102,12 +102,16 @@ h1, h2, h3, h4 {
 }
 
 .logo-img {
-    height: 28px;
-    width: auto;
+    height: 28px !important;
+    max-height: 28px !important;
+    width: auto !important;
+    max-width: 120px !important;
 }
 
 .footer-logo {
-    height: 32px;
+    height: 32px !important;
+    max-height: 32px !important;
+    max-width: 140px !important;
 }
 
 .nav-links {
