@@ -11,7 +11,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="stylesheet" href="/css/styles.css?v=3.2">
+    <link rel="stylesheet" href="/css/styles.css?v=3.3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -246,32 +246,69 @@
             <h2 class="section-title">Lock In Your <span class="gradient-lime">First-Year Rate</span></h2>
             <p class="section-subtitle">This exclusive pricing is only available to our first 1,000 members</p>
             
-            <div class="pricing-card">
-                <div class="best-value-badge">BEST VALUE</div>
-                <h3 class="plan-name">Tavvy Pro</h3>
-                <div class="price">
-                    <span class="amount">$199</span>
-                    <span class="period">/year</span>
+            <!-- Billing Toggle -->
+            <div class="billing-toggle">
+                <button class="toggle-btn active" data-billing="yearly">Yearly <span class="save-badge">Save $$$</span></button>
+                <button class="toggle-btn" data-billing="monthly">Monthly</button>
+            </div>
+            
+            <div class="pricing-grid">
+                <!-- Pro Plan -->
+                <div class="pricing-card">
+                    <h3 class="plan-name">Pro</h3>
+                    <div class="price">
+                        <span class="original-price">$599</span>
+                        <span class="amount">$199</span>
+                    </div>
+                    <p class="price-period">for your first year</p>
+                    <p class="price-note">Then $599/year</p>
+                    <div class="founders-badge">Founders Discount: Save $400</div>
+                    <p class="spots-left"><span class="spots-count">111</span> of 1,000 spots left</p>
+                    
+                    <ul class="benefits-list">
+                        <li><span class="check">✓</span> Unlimited lead access in your area</li>
+                        <li><span class="check">✓</span> Fair lead distribution - no racing</li>
+                        <li><span class="check">✓</span> Fair review system - bad days fade</li>
+                        <li><span class="check">✓</span> Direct messaging with customers</li>
+                        <li><span class="check">✓</span> Profile & portfolio showcase</li>
+                        <li><span class="check">✓</span> No per-lead fees. Ever.</li>
+                    </ul>
+                    
+                    <a href="https://pros.tavvy.com/signup?plan=pro" class="btn-primary btn-cyan btn-full">
+                        Get Pro - $199/year
+                    </a>
+                    
+                    <p class="guarantee">No contract. Renews at $599/year. Cancel anytime.</p>
                 </div>
-                <p class="price-note">Then $599/year. Save $400 your first year.</p>
                 
-                <ul class="benefits-list">
-                    <li><span class="check">✓</span> Unlimited leads in your service area</li>
-                    <li><span class="check">✓</span> Fair lead distribution — no racing</li>
-                    <li><span class="check">✓</span> Reviews that fade over time</li>
-                    <li><span class="check">✓</span> Direct messaging with clients</li>
-                    <li><span class="check">✓</span> Profile & portfolio showcase</li>
-                    <li><span class="check">✓</span> Digital business card</li>
-                    <li><span class="check">✓</span> Analytics dashboard</li>
-                    <li><span class="check">✓</span> No referral fees. Ever.</li>
-                </ul>
-                
-                <a href="https://pros.tavvy.com" class="btn-primary btn-glow btn-full">
-                    Claim Your Spot — $199/year
-                    <span class="arrow">→</span>
-                </a>
-                
-                <p class="guarantee">30-day money-back guarantee. Cancel anytime.</p>
+                <!-- Pro+ Plan -->
+                <div class="pricing-card featured">
+                    <div class="best-value-badge">👑 BEST VALUE</div>
+                    <h3 class="plan-name">Pro+</h3>
+                    <div class="price">
+                        <span class="original-price">$1,399</span>
+                        <span class="amount">$599</span>
+                    </div>
+                    <p class="price-period">for your first year</p>
+                    <p class="price-note">Then $1,399/year</p>
+                    <div class="founders-badge gold">Founders Discount: Save $800</div>
+                    <p class="spots-left"><span class="spots-count">111</span> of 1,000 spots left</p>
+                    
+                    <ul class="benefits-list">
+                        <li><span class="check highlight">✓</span> <strong>Everything in Pro, plus:</strong></li>
+                        <li><span class="check">✓</span> Full CRM with Automation (360 For Business)</li>
+                        <li><span class="check">✓</span> Up to 200 sponsored searches/month</li>
+                        <li><span class="check">✓</span> Free Tavvy Pros Digital Business Cards</li>
+                        <li><span class="check">✓</span> Priority customer support</li>
+                        <li><span class="check">✓</span> Advanced analytics dashboard</li>
+                    </ul>
+                    
+                    <a href="https://pros.tavvy.com/signup?plan=proplus" class="btn-primary btn-gold btn-full">
+                        Get Pro+ - $599/year
+                    </a>
+                    
+                    <p class="guarantee">No contract. Renews at $1,399/year. Cancel anytime.</p>
+                </div>
             </div>
         </div>
     </section>
