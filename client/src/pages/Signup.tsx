@@ -77,6 +77,19 @@ export default function Signup() {
     }
 
     if (data.user) {
+      // Track affiliate lead on successful signup (GoHighLevel)
+      try {
+        if (typeof window !== 'undefined' && (window as any).affiliateManager) {
+          (window as any).affiliateManager.trackLead({
+            email: email,
+            name: fullName,
+          });
+          console.log('Affiliate lead tracked successfully');
+        }
+      } catch (err) {
+        console.warn('Affiliate tracking error:', err);
+      }
+      
       setSuccess(true);
     }
     setLoading(false);
