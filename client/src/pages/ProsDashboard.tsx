@@ -83,7 +83,23 @@ export default function ProsDashboard() {
     }
   };
 
+  // Redirect to onboarding if no profile exists
+  useEffect(() => {
+    if (!profileLoading && !profile) {
+      setLocation('/onboarding');
+    }
+  }, [profileLoading, profile, setLocation]);
+
   if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f9f7f2] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
+  // If no profile, don't render dashboard (will redirect)
+  if (!profile) {
     return (
       <div className="min-h-screen bg-[#f9f7f2] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-orange-500" />

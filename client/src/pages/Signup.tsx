@@ -215,7 +215,7 @@ export default function Signup() {
             >
               {selectedPlan === 'pro_plus' && <Crown className="h-4 w-4" />}
               <span className="font-semibold">
-                {selectedPlan === 'pro_plus' ? 'Pro+ Plan - $599 first year' : 'Pro Plan - $199 first year'}
+                {selectedPlan === 'pro_plus' ? 'Pro+ Plan' : 'Pro Plan'}
               </span>
             </div>
 
