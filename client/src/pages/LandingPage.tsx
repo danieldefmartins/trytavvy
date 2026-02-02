@@ -72,9 +72,9 @@ export default function LandingPage() {
   const counterRef = useRef<NodeJS.Timeout | null>(null);
   const businessTypeRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Business type scrolling animation
+  // Business type scrolling animation - faster transitions
   useEffect(() => {
-    let speed = 2000; // Start slow
+    let speed = 800; // Start faster
     let index = 0;
     
     const animate = () => {
@@ -87,11 +87,12 @@ export default function LandingPage() {
       
       setCurrentBusinessType(index);
       
-      // Accelerate
-      if (index > 10) speed = 1500;
-      if (index > 15) speed = 1000;
-      if (index > 20) speed = 500;
-      if (index > 25) speed = 200;
+      // Accelerate faster
+      if (index > 5) speed = 600;
+      if (index > 10) speed = 400;
+      if (index > 15) speed = 250;
+      if (index > 20) speed = 150;
+      if (index > 25) speed = 100;
       
       businessTypeRef.current = setTimeout(animate, speed);
     };
@@ -240,7 +241,7 @@ export default function LandingPage() {
             <img 
               src="/images/tavvy-logo-new.png" 
               alt="Tavvy" 
-              className="h-8 w-auto"
+              className="h-10 w-auto"
             />
           </div>
           <nav className="hidden md:flex items-center gap-8">
@@ -683,7 +684,7 @@ export default function LandingPage() {
             <img 
               src="/images/tavvy-logo-new.png" 
               alt="Tavvy" 
-              className="h-8 w-auto"
+              className="h-10 w-auto"
             />
             <div className="flex gap-6 text-gray-400 text-sm">
               <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
