@@ -11,7 +11,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     
-    <link rel="stylesheet" href="/css/styles.css?v=3.3">
+    <link rel="stylesheet" href="/css/styles.css?v=3.4">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -254,16 +254,17 @@
             
             <div class="pricing-grid">
                 <!-- Pro Plan -->
-                <div class="pricing-card">
+                <div class="pricing-card" id="pro-card">
                     <h3 class="plan-name">Pro</h3>
                     <div class="price">
-                        <span class="original-price">$599</span>
-                        <span class="amount">$199</span>
+                        <span class="original-price" id="pro-original">$599</span>
+                        <span class="amount" id="pro-amount">$199</span>
+                        <span class="price-suffix" id="pro-suffix"></span>
                     </div>
-                    <p class="price-period">for your first year</p>
-                    <p class="price-note">Then $599/year</p>
-                    <div class="founders-badge">Founders Discount: Save $400</div>
-                    <p class="spots-left"><span class="spots-count">111</span> of 1,000 spots left</p>
+                    <p class="price-period" id="pro-period">for your first year</p>
+                    <p class="price-note" id="pro-note">Then $599/year</p>
+                    <div class="founders-badge" id="pro-badge">Founders Discount: Save $400</div>
+                    <p class="spots-left"><span class="spots-count">433</span> of 1,000 spots left</p>
                     
                     <ul class="benefits-list">
                         <li><span class="check">✓</span> Unlimited lead access in your area</li>
@@ -274,25 +275,26 @@
                         <li><span class="check">✓</span> No per-lead fees. Ever.</li>
                     </ul>
                     
-                    <a href="https://pros.tavvy.com/signup?plan=pro" class="btn-primary btn-cyan btn-full">
+                    <a href="https://pros.tavvy.com/signup?plan=pro" class="btn-primary btn-cyan btn-full" id="pro-cta">
                         Get Pro - $199/year
                     </a>
                     
-                    <p class="guarantee">No contract. Renews at $599/year. Cancel anytime.</p>
+                    <p class="guarantee" id="pro-guarantee">No contract. Renews at $599/year. Cancel anytime.</p>
                 </div>
                 
                 <!-- Pro+ Plan -->
-                <div class="pricing-card featured">
+                <div class="pricing-card featured" id="proplus-card">
                     <div class="best-value-badge">👑 BEST VALUE</div>
                     <h3 class="plan-name">Pro+</h3>
                     <div class="price">
-                        <span class="original-price">$1,399</span>
-                        <span class="amount">$599</span>
+                        <span class="original-price" id="proplus-original">$1,399</span>
+                        <span class="amount" id="proplus-amount">$599</span>
+                        <span class="price-suffix" id="proplus-suffix"></span>
                     </div>
-                    <p class="price-period">for your first year</p>
-                    <p class="price-note">Then $1,399/year</p>
-                    <div class="founders-badge gold">Founders Discount: Save $800</div>
-                    <p class="spots-left"><span class="spots-count">111</span> of 1,000 spots left</p>
+                    <p class="price-period" id="proplus-period">for your first year</p>
+                    <p class="price-note" id="proplus-note">Then $1,399/year</p>
+                    <div class="founders-badge gold" id="proplus-badge">Founders Discount: Save $800</div>
+                    <p class="spots-left"><span class="spots-count">433</span> of 1,000 spots left</p>
                     
                     <ul class="benefits-list">
                         <li><span class="check highlight">✓</span> <strong>Everything in Pro, plus:</strong></li>
@@ -303,11 +305,11 @@
                         <li><span class="check">✓</span> Advanced analytics dashboard</li>
                     </ul>
                     
-                    <a href="https://pros.tavvy.com/signup?plan=proplus" class="btn-primary btn-gold btn-full">
+                    <a href="https://pros.tavvy.com/signup?plan=proplus" class="btn-primary btn-gold btn-full" id="proplus-cta">
                         Get Pro+ - $599/year
                     </a>
                     
-                    <p class="guarantee">No contract. Renews at $1,399/year. Cancel anytime.</p>
+                    <p class="guarantee" id="proplus-guarantee">No contract. Renews at $1,399/year. Cancel anytime.</p>
                 </div>
             </div>
         </div>
@@ -420,6 +422,6 @@
         </div>
     </footer>
 
-    <script src="/js/main.js?v=3.0"></script>
+    <script src="/js/main.js?v=2.0"></script>
 </body>
 </html>

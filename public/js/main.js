@@ -191,6 +191,123 @@ document.querySelectorAll('.faq-item').forEach(item => {
     });
 });
 
+// Billing Toggle Functionality
+const pricingData = {
+    yearly: {
+        pro: {
+            original: '$599',
+            amount: '$199',
+            suffix: '',
+            period: 'for your first year',
+            note: 'Then $599/year',
+            badge: 'Founders Discount: Save $400',
+            cta: 'Get Pro - $199/year',
+            guarantee: 'No contract. Renews at $599/year. Cancel anytime.',
+            link: 'https://pros.tavvy.com/signup?plan=pro&billing=yearly'
+        },
+        proplus: {
+            original: '$1,399',
+            amount: '$599',
+            suffix: '',
+            period: 'for your first year',
+            note: 'Then $1,399/year',
+            badge: 'Founders Discount: Save $800',
+            cta: 'Get Pro+ - $599/year',
+            guarantee: 'No contract. Renews at $1,399/year. Cancel anytime.',
+            link: 'https://pros.tavvy.com/signup?plan=proplus&billing=yearly'
+        }
+    },
+    monthly: {
+        pro: {
+            original: '$59.99',
+            amount: '$49.99',
+            suffix: '/month',
+            period: 'for your first 12 months',
+            note: 'Then $59.99/mo',
+            badge: 'Founders Discount: Save $10/mo',
+            cta: 'Get Pro - $49.99/mo',
+            guarantee: 'No contract. Renews at $59.99/mo. Cancel anytime.',
+            link: 'https://pros.tavvy.com/signup?plan=pro&billing=monthly'
+        },
+        proplus: {
+            original: '$119.99',
+            amount: '$69.99',
+            suffix: '/month',
+            period: 'for your first 12 months',
+            note: 'Then $119.99/mo',
+            badge: 'Founders Discount: Save $50/mo',
+            cta: 'Get Pro+ - $69.99/mo',
+            guarantee: 'No contract. Renews at $119.99/mo. Cancel anytime.',
+            link: 'https://pros.tavvy.com/signup?plan=proplus&billing=monthly'
+        }
+    }
+};
+
+function updatePricing(billingType) {
+    const data = pricingData[billingType];
+    
+    // Update Pro card
+    const proOriginal = document.getElementById('pro-original');
+    const proAmount = document.getElementById('pro-amount');
+    const proSuffix = document.getElementById('pro-suffix');
+    const proPeriod = document.getElementById('pro-period');
+    const proNote = document.getElementById('pro-note');
+    const proBadge = document.getElementById('pro-badge');
+    const proCta = document.getElementById('pro-cta');
+    const proGuarantee = document.getElementById('pro-guarantee');
+    
+    if (proOriginal) proOriginal.textContent = data.pro.original;
+    if (proAmount) proAmount.textContent = data.pro.amount;
+    if (proSuffix) proSuffix.textContent = data.pro.suffix;
+    if (proPeriod) proPeriod.textContent = data.pro.period;
+    if (proNote) proNote.textContent = data.pro.note;
+    if (proBadge) proBadge.textContent = data.pro.badge;
+    if (proCta) {
+        proCta.textContent = data.pro.cta;
+        proCta.href = data.pro.link;
+    }
+    if (proGuarantee) proGuarantee.textContent = data.pro.guarantee;
+    
+    // Update Pro+ card
+    const proplusOriginal = document.getElementById('proplus-original');
+    const proplusAmount = document.getElementById('proplus-amount');
+    const proplusSuffix = document.getElementById('proplus-suffix');
+    const proplusPeriod = document.getElementById('proplus-period');
+    const proplusNote = document.getElementById('proplus-note');
+    const proplusBadge = document.getElementById('proplus-badge');
+    const proplusCta = document.getElementById('proplus-cta');
+    const proplusGuarantee = document.getElementById('proplus-guarantee');
+    
+    if (proplusOriginal) proplusOriginal.textContent = data.proplus.original;
+    if (proplusAmount) proplusAmount.textContent = data.proplus.amount;
+    if (proplusSuffix) proplusSuffix.textContent = data.proplus.suffix;
+    if (proplusPeriod) proplusPeriod.textContent = data.proplus.period;
+    if (proplusNote) proplusNote.textContent = data.proplus.note;
+    if (proplusBadge) proplusBadge.textContent = data.proplus.badge;
+    if (proplusCta) {
+        proplusCta.textContent = data.proplus.cta;
+        proplusCta.href = data.proplus.link;
+    }
+    if (proplusGuarantee) proplusGuarantee.textContent = data.proplus.guarantee;
+}
+
+// Initialize billing toggle
+document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtns = document.querySelectorAll('.toggle-btn');
+    
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Update active state
+            toggleBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Update pricing
+            const billingType = btn.dataset.billing;
+            updatePricing(billingType);
+        });
+    });
+});
+
 // Spot counter animation
 function updateSpotCounter() {
     const spotsElement = document.getElementById('spots-count');
