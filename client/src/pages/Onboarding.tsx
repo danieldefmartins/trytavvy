@@ -1061,10 +1061,24 @@ export default function OnboardingNew() {
               id="serviceRadius"
               type="number"
               placeholder="25"
-              value={data.serviceRadius}
-              onChange={(e) => updateData({ serviceRadius: parseInt(e.target.value) || 25 })}
+              min="1"
+              max="500"
+              value={data.serviceRadius || ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                // Allow empty string while typing, store as number or empty
+                updateData({ serviceRadius: val === '' ? 0 : parseInt(val) });
+              }}
+              onBlur={(e) => {
+                // On blur, if empty or 0, set to default 25
+                const val = parseInt(e.target.value);
+                if (!val || val < 1) {
+                  updateData({ serviceRadius: 25 });
+                }
+              }}
               style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
             />
+            <p className="text-xs" style={{ color: COLORS.textDim }}>How far will you travel to serve customers?</p>
           </div>
         </div>
       ) : (
