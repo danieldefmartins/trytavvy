@@ -152,6 +152,17 @@ async function startServer() {
   // Trust proxy for accurate IP detection behind Railway/load balancers
   app.set('trust proxy', 1);
   
+  // Error handling for malformed URLs (bot scanners send invalid UTF-8 sequences)
+  app.use((req, res, next) => {
+    try {
+      decodeURIComponent(req.path);
+      next();
+    } catch (e) {
+      // Silently reject malformed URLs (likely bot/scanner attacks)
+      res.status(400).send('Bad Request');
+    }
+  });
+  
   // CORS middleware with allowlist
   app.use(cors({
     origin: function(origin, callback) {
