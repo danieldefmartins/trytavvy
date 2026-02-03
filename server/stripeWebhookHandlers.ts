@@ -7,6 +7,80 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
+// Go High Level API configuration
+const GHL_WEBHOOK_URL = process.env.GHL_WEBHOOK_URL || '';
+const GHL_API_KEY = process.env.GHL_API_KEY || '';
+
+/**
+ * Send welcome automation to Go High Level
+ * This triggers the welcome SMS and email sequence
+ */
+async function sendToGoHighLevel(data: {
+  email: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  plan: string;
+  interval: string;
+  stripeCustomerId: string;
+  userId?: string;
+}): Promise<void> {
+  if (!GHL_WEBHOOK_URL) {
+    console.warn('GHL_WEBHOOK_URL not configured - skipping Go High Level integration');
+    return;
+  }
+
+  try {
+    console.log('Sending welcome automation to Go High Level for:', data.email);
+    
+    const response = await fetch(GHL_WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(GHL_API_KEY && { 'Authorization': `Bearer ${GHL_API_KEY}` }),
+      },
+      body: JSON.stringify({
+        // Contact info
+        email: data.email,
+        phone: data.phone || '',
+        firstName: data.firstName || data.fullName?.split(' ')[0] || '',
+        lastName: data.lastName || data.fullName?.split(' ').slice(1).join(' ') || '',
+        name: data.fullName || '',
+        
+        // Subscription info
+        plan: data.plan,
+        interval: data.interval,
+        stripeCustomerId: data.stripeCustomerId,
+        
+        // Tavvy-specific
+        source: 'tavvy_pros',
+        event: 'payment_completed',
+        userId: data.userId || '',
+        timestamp: new Date().toISOString(),
+        
+        // Tags for GHL automation
+        tags: [
+          'tavvy_pro',
+          `plan_${data.plan}`,
+          `billing_${data.interval}`,
+          'welcome_sequence'
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Go High Level webhook failed:', response.status, errorText);
+    } else {
+      console.log('Successfully sent to Go High Level for:', data.email);
+    }
+  } catch (error) {
+    console.error('Error sending to Go High Level:', error);
+    // Don't throw - we don't want to fail the webhook if GHL fails
+  }
+}
+
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
@@ -82,6 +156,22 @@ export async function handleCheckoutSessionCompleted(
     }
 
     console.log(`Successfully activated subscription for user ${user.id} (${customerEmail}) - Portal: ${portalType}`);
+
+    // Send welcome automation to Go High Level
+    // This triggers the welcome SMS and email sequence
+    const customerPhone = session.customer_details?.phone || '';
+    const customerName = session.customer_details?.name || user.user_metadata?.full_name || '';
+    
+    await sendToGoHighLevel({
+      email: customerEmail,
+      phone: customerPhone,
+      fullName: customerName,
+      plan: plan,
+      interval: interval,
+      stripeCustomerId: session.customer as string,
+      userId: user.id,
+    });
+
   } catch (error) {
     console.error('Error in handleCheckoutSessionCompleted:', error);
   }
