@@ -288,6 +288,74 @@ export default function OnboardingNew() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categorySearch, setCategorySearch] = useState('');
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  // Load saved progress when component mounts
+  useEffect(() => {
+    const loadSavedProgress = async () => {
+      if (!user) {
+        setInitialLoading(false);
+        return;
+      }
+
+      try {
+        // First check for existing pro record
+        const { data: proData } = await supabase
+          .from('pros')
+          .select(`
+            *,
+            places:place_id (*)
+          `)
+          .eq('user_id', user.id)
+          .single();
+
+        if (proData) {
+          const place = proData.places;
+          const specialties = Array.isArray(proData.specialties) ? proData.specialties : [];
+          
+          // Restore saved data
+          setData(prev => ({
+            ...prev,
+            providerType: proData.provider_type || '',
+            primaryCategory: specialties[0] || '',
+            selectedSubcategories: specialties.slice(1) || [],
+            businessName: place?.name || '',
+            phone: place?.phone || '',
+            email: place?.email || '',
+            website: place?.website || '',
+            yearEstablished: proData.year_established?.toString() || '',
+            locationType: proData.service_areas?.length > 0 ? 'mobile' : 'fixed',
+            address: place?.address || '',
+            address2: '',
+            city: place?.city || '',
+            state: place?.state || '',
+            zipCode: place?.zip_code || '',
+            serviceAreas: Array.isArray(proData.service_areas) ? proData.service_areas : [],
+            serviceRadius: proData.service_radius || 25,
+            hours: place?.hours || initialData.hours,
+            byAppointmentOnly: false,
+            services: Array.isArray(proData.services) ? proData.services : [],
+            profilePhoto: place?.logo || null,
+            coverPhoto: place?.cover_photo || null,
+            workPhotos: Array.isArray(place?.photos) ? place.photos : [],
+            highlights: Array.isArray(proData.highlights) ? proData.highlights : [],
+            licenseNumber: proData.license_number || '',
+            licenseState: proData.license_state || '',
+            shortBio: proData.bio || place?.short_description || '',
+            fullDescription: place?.description || '',
+            currentStep: proData.onboarding_step || 1,
+          }));
+        }
+      } catch (err) {
+        console.error('Error loading saved progress:', err);
+        // If no saved data, start fresh - this is not an error
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadSavedProgress();
+  }, [user]);
 
   // Calculate profile completion percentage
   const calculateCompletion = useCallback((): number => {
@@ -322,14 +390,12 @@ export default function OnboardingNew() {
   // Navigation
   const nextStep = async () => {
     if (data.currentStep < TOTAL_STEPS) {
-      // Save progress at key milestones (after business info, location, and services)
-      if ([3, 4, 6, 9].includes(data.currentStep)) {
-        try {
-          await saveProgress();
-        } catch (err) {
-          // Don't block navigation on save errors
-          console.error('Save error:', err);
-        }
+      // Save progress after EVERY step so user can resume later
+      try {
+        await saveProgress();
+      } catch (err) {
+        // Don't block navigation on save errors
+        console.error('Save error:', err);
       }
       updateData({ currentStep: data.currentStep + 1 });
       window.scrollTo(0, 0);
@@ -1716,11 +1782,30 @@ export default function OnboardingNew() {
     return <div key={`step-${data.currentStep}`}>{stepContent}</div>;
   };
 
+  // Show loading state while loading saved progress
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: COLORS.background }}>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" style={{ color: COLORS.teal }} />
+          <p style={{ color: COLORS.textMuted }}>Loading your progress...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: COLORS.background }}>
       <ProgressHeader />
       
       <div className="max-w-2xl mx-auto px-4 py-8">
+        {saving && (
+          <div className="fixed top-4 right-4 px-3 py-2 rounded-lg flex items-center gap-2 z-50" style={{ backgroundColor: COLORS.backgroundCard }}>
+            <Loader2 className="h-4 w-4 animate-spin" style={{ color: COLORS.teal }} />
+            <span className="text-sm" style={{ color: COLORS.textMuted }}>Saving...</span>
+          </div>
+        )}
+        
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
