@@ -156,7 +156,7 @@ export default function LandingPage() {
     try {
       const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
         body: {
-          successUrl: window.location.origin + `/signup?payment=success&plan=${plan}&cycle=${cycle}`,
+          successUrl: window.location.origin + `/signup?payment=success&plan=${plan}&cycle=${cycle}&session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: window.location.origin + '/',
           plan: plan,
           cycle: cycle,
