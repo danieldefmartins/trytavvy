@@ -37,27 +37,27 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'Pool Maintenance',
           icon: '🧹',
-          services: ['Weekly Pool Cleaning', 'Chemical Balancing', 'Filter Cleaning', 'Skimmer Basket Cleaning', 'Pool Vacuuming', 'Tile Brushing', 'Water Testing', 'Algae Treatment', 'Salt Cell Cleaning', 'Seasonal Opening', 'Seasonal Closing', 'Winterization']
+          services: ['Weekly Pool Service', 'Pool Opening', 'Pool Closing', 'Green Pool Cleanup', 'Algae Removal', 'Pool Winterization', 'Salt Cell Replacement', 'Filter Cartridge Replacement', 'Pool Inspection']
         },
         {
           name: 'Pool Repair',
           icon: '🔧',
-          services: ['Pump Repair', 'Pump Replacement', 'Heater Repair', 'Heater Replacement', 'Filter Repair', 'Filter Replacement', 'Leak Detection', 'Leak Repair', 'Tile Repair', 'Coping Repair', 'Plaster Repair', 'Light Repair', 'Valve Repair', 'Pipe Repair', 'Motor Repair', 'Control System Repair']
+          services: ['Pump Replacement', 'Heater Replacement', 'Filter Replacement', 'Leak Detection', 'Leak Repair', 'Crack Repair', 'Tile Replacement', 'Coping Replacement', 'Plaster Repair', 'Pool Light Replacement', 'Skimmer Replacement', 'Motor Replacement', 'Valve Replacement', 'Pool Pipe Repair']
         },
         {
           name: 'Pool Construction',
           icon: '🏗️',
-          services: ['New Pool Build', 'Pool Remodeling', 'Pool Resurfacing', 'Pool Replastering', 'Pool Tile Installation', 'Pool Deck Installation', 'Pool Deck Resurfacing', 'Pool Coping Installation', 'Pool Waterfall', 'Pool Fountain', 'Pool Lighting Installation', 'Pool Automation', 'Pool Cover Installation', 'Pool Fence Installation', 'Pool Safety Features']
+          services: ['New Pool Construction', 'Pool Renovation', 'Pool Resurfacing', 'Pool Replastering', 'Pool Tile Installation', 'Pool Deck Construction', 'Pool Deck Resurfacing', 'Coping Installation', 'Pool Waterfall Installation', 'Pool Fountain Installation', 'Pool Fence Installation', 'Pool Enclosure', 'Pebble Finish', 'Diamond Brite']
         },
         {
           name: 'Hot Tub & Spa',
           icon: '♨️',
-          services: ['Hot Tub Installation', 'Hot Tub Repair', 'Hot Tub Maintenance', 'Spa Cleaning', 'Spa Chemical Balancing', 'Spa Cover Replacement', 'Spa Pump Repair', 'Spa Heater Repair', 'Spa Jet Repair', 'Spa Electrical Repair']
+          services: ['Hot Tub Installation', 'Hot Tub Repair', 'Spa Installation', 'Spa Repair', 'Hot Tub Cover Replacement', 'Spa Pump Replacement', 'Spa Heater Replacement', 'Jet Replacement', 'Hot Tub Electrical']
         },
         {
           name: 'Pool Equipment',
           icon: '⚙️',
-          services: ['Pool Pump Installation', 'Pool Heater Installation', 'Pool Filter Installation', 'Salt System Installation', 'Pool Cleaner Installation', 'Pool Automation System', 'Variable Speed Pump Upgrade', 'Energy Efficient Equipment', 'Pool Timer Installation', 'Pool Chlorinator Installation']
+          services: ['Pump Installation', 'Heater Installation', 'Filter Installation', 'Salt System Installation', 'Pool Cleaner Installation', 'Automation System Installation', 'Variable Speed Pump', 'Heat Pump Installation', 'Gas Heater Installation', 'Solar Heater Installation', 'LED Pool Lights', 'Pool Timer Installation']
         }
       ]
     },
@@ -71,32 +71,32 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'Drain Services',
           icon: '🚿',
-          services: ['Drain Cleaning', 'Drain Unclogging', 'Drain Snaking', 'Hydro Jetting', 'Drain Camera Inspection', 'Drain Repair', 'Drain Installation', 'Floor Drain Service', 'Shower Drain Service', 'Kitchen Drain Service']
+          services: ['Clogged Drain', 'Drain Cleaning', 'Hydro Jetting', 'Drain Camera Inspection', 'Main Line Cleaning', 'Kitchen Drain Repair', 'Shower Drain Repair', 'Floor Drain Installation']
         },
         {
           name: 'Water Heater',
           icon: '🔥',
-          services: ['Water Heater Repair', 'Water Heater Installation', 'Water Heater Replacement', 'Tankless Water Heater Installation', 'Tankless Water Heater Repair', 'Water Heater Maintenance', 'Water Heater Flush', 'Anode Rod Replacement', 'Thermostat Repair', 'Gas Water Heater Service', 'Electric Water Heater Service']
+          services: ['Water Heater Installation', 'Water Heater Replacement', 'Tankless Water Heater Installation', 'Water Heater Repair', 'Gas Water Heater Installation', 'Electric Water Heater Installation', 'Hot Water Recirculation Pump']
         },
         {
           name: 'Pipe Services',
           icon: '🔩',
-          services: ['Pipe Repair', 'Pipe Replacement', 'Pipe Rerouting', 'Pipe Insulation', 'Frozen Pipe Repair', 'Burst Pipe Repair', 'Pipe Leak Repair', 'Copper Pipe Installation', 'PEX Pipe Installation', 'Gas Pipe Installation', 'Gas Pipe Repair', 'Repiping']
+          services: ['Pipe Repair', 'Pipe Replacement', 'Whole House Repiping', 'Frozen Pipe Repair', 'Burst Pipe Repair', 'Water Leak Repair', 'Gas Line Installation', 'Gas Line Repair', 'PEX Repiping', 'Copper Repiping']
         },
         {
           name: 'Fixture Services',
           icon: '🚰',
-          services: ['Faucet Repair', 'Faucet Installation', 'Faucet Replacement', 'Toilet Repair', 'Toilet Installation', 'Toilet Replacement', 'Sink Repair', 'Sink Installation', 'Garbage Disposal Repair', 'Garbage Disposal Installation', 'Shower Valve Repair', 'Bathtub Repair']
+          services: ['Faucet Installation', 'Faucet Replacement', 'Toilet Installation', 'Toilet Replacement', 'Sink Installation', 'Garbage Disposal Installation', 'Shower Installation', 'Bathtub Installation', 'Bidet Installation']
         },
         {
           name: 'Sewer & Septic',
           icon: '🏠',
-          services: ['Sewer Line Repair', 'Sewer Line Replacement', 'Sewer Line Cleaning', 'Sewer Camera Inspection', 'Septic Pumping', 'Septic Inspection', 'Septic Repair', 'Septic Installation', 'Backflow Prevention', 'Backflow Testing']
+          services: ['Sewer Line Repair', 'Sewer Line Replacement', 'Sewer Camera Inspection', 'Septic Tank Pumping', 'Septic System Installation', 'Septic Repair', 'Backflow Preventer Installation', 'Backflow Testing']
         },
         {
           name: 'Water Treatment',
           icon: '💧',
-          services: ['Water Softener Installation', 'Water Softener Repair', 'Water Filtration Installation', 'Reverse Osmosis Installation', 'Water Testing', 'Well Pump Repair', 'Well Pump Installation', 'Sump Pump Repair', 'Sump Pump Installation']
+          services: ['Water Softener Installation', 'Water Filtration System', 'Reverse Osmosis System', 'Well Pump Installation', 'Well Pump Replacement', 'Sump Pump Installation', 'Sump Pump Replacement']
         }
       ]
     },
@@ -110,27 +110,27 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'Wiring & Panels',
           icon: '🔌',
-          services: ['Electrical Wiring', 'Rewiring', 'Panel Upgrade', 'Panel Replacement', 'Circuit Breaker Repair', 'Circuit Breaker Replacement', 'Fuse Box Upgrade', 'Electrical Inspection', 'Code Compliance', 'Grounding', 'Surge Protection']
+          services: ['Electrical Panel Upgrade', 'Panel Replacement', 'Circuit Breaker Replacement', 'Whole House Rewiring', 'Electrical Inspection', 'Surge Protector Installation', '200 Amp Service Upgrade', 'Subpanel Installation']
         },
         {
           name: 'Lighting',
           icon: '💡',
-          services: ['Light Installation', 'Light Repair', 'Recessed Lighting', 'LED Lighting Upgrade', 'Chandelier Installation', 'Ceiling Fan Installation', 'Ceiling Fan Repair', 'Under Cabinet Lighting', 'Landscape Lighting', 'Security Lighting', 'Motion Sensor Lights', 'Dimmer Switch Installation']
+          services: ['Recessed Lighting Installation', 'LED Lighting Installation', 'Chandelier Installation', 'Ceiling Fan Installation', 'Landscape Lighting', 'Security Lighting', 'Under Cabinet Lighting', 'Track Lighting Installation']
         },
         {
           name: 'Outlets & Switches',
           icon: '🔘',
-          services: ['Outlet Installation', 'Outlet Repair', 'Outlet Replacement', 'GFCI Outlet Installation', 'USB Outlet Installation', 'Switch Installation', 'Switch Repair', 'Smart Switch Installation', 'Dimmer Installation', '240V Outlet Installation']
+          services: ['Outlet Installation', 'GFCI Outlet Installation', '240V Outlet Installation', 'USB Outlet Installation', 'Dimmer Switch Installation', 'Smart Switch Installation', 'Outlet Repair']
         },
         {
           name: 'Specialty Electrical',
           icon: '🔋',
-          services: ['EV Charger Installation', 'Generator Installation', 'Generator Repair', 'Generator Maintenance', 'Whole House Generator', 'Backup Power System', 'Solar Panel Wiring', 'Hot Tub Wiring', 'Pool Electrical', 'Spa Electrical']
+          services: ['EV Charger Installation', 'Tesla Charger Installation', 'Generator Installation', 'Whole House Generator', 'Hot Tub Wiring', 'Pool Electrical', 'Spa Electrical', 'Solar Panel Installation']
         },
         {
           name: 'Smart Home',
           icon: '🏠',
-          services: ['Smart Home Installation', 'Smart Thermostat Installation', 'Smart Lighting Setup', 'Smart Lock Installation', 'Home Automation', 'Whole Home Audio', 'Network Wiring', 'Structured Wiring', 'Security System Wiring']
+          services: ['Smart Home Setup', 'Smart Thermostat Installation', 'Smart Lock Installation', 'Home Automation', 'Security Camera Installation', 'Doorbell Camera Installation', 'Whole Home Audio']
         }
       ]
     },
@@ -144,27 +144,27 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'Air Conditioning',
           icon: '❄️',
-          services: ['AC Repair', 'AC Installation', 'AC Replacement', 'AC Maintenance', 'AC Tune-Up', 'Refrigerant Recharge', 'AC Coil Cleaning', 'Compressor Repair', 'Compressor Replacement', 'Central AC Installation', 'Mini Split Installation', 'Mini Split Repair', 'Window AC Installation']
+          services: ['AC Installation', 'AC Replacement', 'AC Repair', 'Central AC Installation', 'Mini Split Installation', 'Mini Split Repair', 'AC Not Cooling', 'Refrigerant Recharge', 'Compressor Replacement']
         },
         {
           name: 'Heating',
           icon: '🔥',
-          services: ['Furnace Repair', 'Furnace Installation', 'Furnace Replacement', 'Furnace Maintenance', 'Heat Pump Repair', 'Heat Pump Installation', 'Boiler Repair', 'Boiler Installation', 'Radiant Heating', 'Baseboard Heater', 'Space Heater Installation', 'Gas Fireplace Installation']
+          services: ['Furnace Installation', 'Furnace Replacement', 'Furnace Repair', 'Heat Pump Installation', 'Heat Pump Replacement', 'Boiler Installation', 'Boiler Repair', 'Gas Fireplace Installation', 'Radiant Floor Heating']
         },
         {
           name: 'Ductwork',
           icon: '🌀',
-          services: ['Duct Cleaning', 'Duct Repair', 'Duct Installation', 'Duct Sealing', 'Duct Insulation', 'Duct Replacement', 'Ductless System Installation', 'Air Balancing', 'Zoning System Installation']
+          services: ['Duct Cleaning', 'Duct Installation', 'Duct Replacement', 'Duct Sealing', 'Ductless System Installation', 'Zoning System Installation', 'Air Balancing']
         },
         {
           name: 'Indoor Air Quality',
           icon: '🌬️',
-          services: ['Air Purifier Installation', 'Humidifier Installation', 'Dehumidifier Installation', 'UV Light Installation', 'Air Filter Replacement', 'Ventilation Installation', 'ERV Installation', 'HRV Installation', 'Dryer Vent Cleaning', 'Air Quality Testing']
+          services: ['Air Purifier Installation', 'Whole House Humidifier', 'Dehumidifier Installation', 'UV Light Installation', 'Dryer Vent Cleaning', 'Ventilation Installation']
         },
         {
           name: 'Thermostats',
           icon: '🌡️',
-          services: ['Thermostat Installation', 'Thermostat Replacement', 'Smart Thermostat Installation', 'Programmable Thermostat', 'Thermostat Repair', 'Thermostat Calibration', 'Multi-Zone Thermostat']
+          services: ['Smart Thermostat Installation', 'Nest Thermostat Installation', 'Ecobee Installation', 'Thermostat Replacement', 'Multi-Zone Thermostat']
         }
       ]
     },
@@ -178,22 +178,22 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'Roof Repair',
           icon: '🔧',
-          services: ['Roof Leak Repair', 'Shingle Repair', 'Shingle Replacement', 'Flashing Repair', 'Vent Repair', 'Skylight Repair', 'Chimney Repair', 'Ridge Cap Repair', 'Valley Repair', 'Emergency Roof Repair', 'Storm Damage Repair', 'Hail Damage Repair']
+          services: ['Roof Leak Repair', 'Shingle Replacement', 'Flashing Repair', 'Skylight Repair', 'Emergency Roof Repair', 'Storm Damage Repair', 'Hail Damage Repair', 'Chimney Flashing']
         },
         {
           name: 'Roof Installation',
           icon: '🏗️',
-          services: ['New Roof Installation', 'Roof Replacement', 'Asphalt Shingle Roof', 'Metal Roof Installation', 'Tile Roof Installation', 'Slate Roof Installation', 'Flat Roof Installation', 'TPO Roofing', 'EPDM Roofing', 'Modified Bitumen', 'Cedar Shake Roof', 'Synthetic Roofing']
+          services: ['New Roof Installation', 'Roof Replacement', 'Asphalt Shingle Roof', 'Metal Roof Installation', 'Tile Roof Installation', 'Flat Roof Installation', 'TPO Roofing', 'Standing Seam Metal Roof']
         },
         {
           name: 'Gutters',
           icon: '🌧️',
-          services: ['Gutter Installation', 'Gutter Repair', 'Gutter Cleaning', 'Gutter Guard Installation', 'Seamless Gutter Installation', 'Downspout Installation', 'Downspout Repair', 'Gutter Replacement', 'Gutter Realignment']
+          services: ['Gutter Installation', 'Seamless Gutter Installation', 'Gutter Replacement', 'Gutter Guard Installation', 'Downspout Installation', 'Gutter Repair']
         },
         {
           name: 'Roof Maintenance',
           icon: '🧹',
-          services: ['Roof Inspection', 'Roof Cleaning', 'Moss Removal', 'Roof Coating', 'Roof Sealing', 'Preventive Maintenance', 'Annual Roof Checkup', 'Debris Removal']
+          services: ['Roof Inspection', 'Roof Cleaning', 'Roof Coating', 'Moss Removal', 'Roof Sealing']
         }
       ]
     },
@@ -207,32 +207,32 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'Lawn Care',
           icon: '🌱',
-          services: ['Lawn Mowing', 'Lawn Edging', 'Lawn Fertilization', 'Lawn Aeration', 'Lawn Seeding', 'Overseeding', 'Sod Installation', 'Lawn Dethatching', 'Weed Control', 'Grub Treatment', 'Lawn Disease Treatment', 'Seasonal Lawn Care']
+          services: ['Lawn Mowing Service', 'Lawn Fertilization', 'Lawn Aeration', 'Sod Installation', 'Overseeding', 'Weed Control', 'Grub Treatment']
         },
         {
           name: 'Tree & Shrub',
           icon: '🌲',
-          services: ['Tree Trimming', 'Tree Pruning', 'Tree Removal', 'Stump Removal', 'Stump Grinding', 'Shrub Trimming', 'Hedge Trimming', 'Bush Removal', 'Tree Planting', 'Shrub Planting', 'Tree Health Assessment', 'Tree Cabling']
+          services: ['Tree Trimming', 'Tree Removal', 'Stump Removal', 'Stump Grinding', 'Hedge Trimming', 'Tree Planting', 'Palm Tree Trimming']
         },
         {
           name: 'Irrigation',
           icon: '💦',
-          services: ['Sprinkler Installation', 'Sprinkler Repair', 'Irrigation System Design', 'Drip Irrigation', 'Sprinkler Head Replacement', 'Sprinkler Winterization', 'Sprinkler Startup', 'Smart Irrigation Controller', 'Rain Sensor Installation', 'Irrigation Audit']
+          services: ['Sprinkler Installation', 'Sprinkler Repair', 'Irrigation System Installation', 'Drip Irrigation Installation', 'Sprinkler Winterization', 'Smart Irrigation Controller']
         },
         {
           name: 'Landscape Design',
           icon: '🎨',
-          services: ['Landscape Design', 'Garden Design', 'Planting Design', 'Flower Bed Installation', 'Mulching', 'Rock Garden', 'Xeriscaping', 'Native Plant Installation', 'Seasonal Planting', 'Container Gardening']
+          services: ['Landscape Design', 'Flower Bed Installation', 'Mulch Installation', 'Rock Garden', 'Xeriscaping', 'Sod Installation']
         },
         {
           name: 'Hardscaping',
           icon: '🧱',
-          services: ['Patio Installation', 'Paver Installation', 'Walkway Installation', 'Retaining Wall', 'Stone Wall', 'Outdoor Steps', 'Driveway Pavers', 'Fire Pit Installation', 'Outdoor Fireplace', 'Water Feature Installation']
+          services: ['Patio Installation', 'Paver Installation', 'Walkway Installation', 'Retaining Wall', 'Fire Pit Installation', 'Outdoor Fireplace', 'Driveway Pavers']
         },
         {
           name: 'Outdoor Structures',
           icon: '🏡',
-          services: ['Deck Building', 'Deck Repair', 'Deck Staining', 'Pergola Installation', 'Gazebo Installation', 'Arbor Installation', 'Fence Installation', 'Fence Repair', 'Gate Installation', 'Outdoor Kitchen', 'Shed Installation']
+          services: ['Deck Building', 'Deck Repair', 'Pergola Installation', 'Fence Installation', 'Fence Repair', 'Gate Installation', 'Outdoor Kitchen', 'Aluminum Pergola']
         }
       ]
     },
@@ -246,27 +246,27 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'Residential Cleaning',
           icon: '🏠',
-          services: ['Regular House Cleaning', 'Deep Cleaning', 'Move-In Cleaning', 'Move-Out Cleaning', 'Spring Cleaning', 'One-Time Cleaning', 'Recurring Cleaning', 'Kitchen Cleaning', 'Bathroom Cleaning', 'Bedroom Cleaning']
+          services: ['House Cleaning', 'Deep Cleaning', 'Move-In Cleaning', 'Move-Out Cleaning', 'Recurring Cleaning', 'One-Time Cleaning']
         },
         {
           name: 'Specialty Cleaning',
           icon: '✨',
-          services: ['Carpet Cleaning', 'Upholstery Cleaning', 'Window Cleaning', 'Pressure Washing', 'Power Washing', 'Tile & Grout Cleaning', 'Hardwood Floor Cleaning', 'Mattress Cleaning', 'Rug Cleaning', 'Blind Cleaning']
+          services: ['Carpet Cleaning', 'Upholstery Cleaning', 'Window Cleaning', 'Pressure Washing', 'Tile & Grout Cleaning', 'Hardwood Floor Cleaning']
         },
         {
           name: 'Post-Construction',
           icon: '🏗️',
-          services: ['Post-Construction Cleaning', 'Renovation Cleanup', 'Dust Removal', 'Debris Removal', 'Final Clean', 'Builder Clean', 'New Construction Cleaning']
+          services: ['Post-Construction Cleaning', 'Renovation Cleanup', 'New Construction Cleaning']
         },
         {
           name: 'Commercial Cleaning',
           icon: '🏢',
-          services: ['Office Cleaning', 'Commercial Cleaning', 'Janitorial Services', 'Retail Cleaning', 'Medical Office Cleaning', 'Restaurant Cleaning', 'Gym Cleaning', 'Church Cleaning', 'School Cleaning']
+          services: ['Office Cleaning', 'Commercial Cleaning', 'Janitorial Services', 'Restaurant Cleaning', 'Medical Office Cleaning']
         },
         {
           name: 'Specialized Services',
           icon: '🧪',
-          services: ['Disinfection Service', 'Sanitization', 'Hoarding Cleanup', 'Estate Cleanout', 'Biohazard Cleanup', 'Odor Removal', 'Air Duct Cleaning', 'Dryer Vent Cleaning', 'Gutter Cleaning']
+          services: ['Disinfection Service', 'Hoarding Cleanup', 'Estate Cleanout', 'Odor Removal', 'Air Duct Cleaning']
         }
       ]
     },
@@ -280,22 +280,22 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'Interior Painting',
           icon: '🏠',
-          services: ['Interior Wall Painting', 'Ceiling Painting', 'Trim Painting', 'Door Painting', 'Cabinet Painting', 'Accent Wall', 'Faux Finish', 'Texture Painting', 'Color Consultation']
+          services: ['Interior Painting', 'Ceiling Painting', 'Trim Painting', 'Cabinet Painting', 'Accent Wall']
         },
         {
           name: 'Exterior Painting',
           icon: '🏡',
-          services: ['Exterior House Painting', 'Siding Painting', 'Trim Painting', 'Door Painting', 'Garage Door Painting', 'Fence Painting', 'Deck Staining', 'Fence Staining', 'Pressure Washing Before Paint']
+          services: ['Exterior Painting', 'House Painting', 'Deck Staining', 'Fence Staining', 'Garage Door Painting']
         },
         {
           name: 'Specialty Finishes',
           icon: '✨',
-          services: ['Cabinet Refinishing', 'Furniture Painting', 'Wallpaper Installation', 'Wallpaper Removal', 'Epoxy Flooring', 'Garage Floor Coating', 'Decorative Painting', 'Murals']
+          services: ['Cabinet Refinishing', 'Wallpaper Installation', 'Wallpaper Removal', 'Epoxy Flooring', 'Garage Floor Coating']
         },
         {
           name: 'Prep & Repair',
           icon: '🔧',
-          services: ['Drywall Repair', 'Drywall Patching', 'Drywall Texture', 'Popcorn Ceiling Removal', 'Caulking', 'Sanding', 'Priming', 'Surface Preparation', 'Lead Paint Removal']
+          services: ['Drywall Repair', 'Drywall Installation', 'Popcorn Ceiling Removal', 'Texture Repair']
         }
       ]
     },
@@ -309,22 +309,22 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'General Repairs',
           icon: '🔧',
-          services: ['Door Repair', 'Window Repair', 'Drywall Repair', 'Caulking', 'Weatherstripping', 'Screen Repair', 'Lock Repair', 'Hinge Repair', 'Handle Replacement', 'Minor Plumbing Repairs', 'Minor Electrical Repairs']
+          services: ['Door Repair', 'Window Repair', 'Drywall Repair', 'Screen Repair', 'Lock Repair']
         },
         {
           name: 'Installation',
           icon: '🔩',
-          services: ['TV Mounting', 'Shelf Installation', 'Picture Hanging', 'Mirror Hanging', 'Curtain Rod Installation', 'Blind Installation', 'Door Installation', 'Pet Door Installation', 'Mailbox Installation', 'House Number Installation']
+          services: ['TV Mounting', 'Shelf Installation', 'Blind Installation', 'Door Installation', 'Pet Door Installation']
         },
         {
           name: 'Assembly',
           icon: '📦',
-          services: ['Furniture Assembly', 'IKEA Assembly', 'Desk Assembly', 'Bed Frame Assembly', 'Bookshelf Assembly', 'Outdoor Furniture Assembly', 'Gym Equipment Assembly', 'Grill Assembly', 'Playground Assembly']
+          services: ['Furniture Assembly', 'IKEA Assembly', 'Gym Equipment Assembly', 'Grill Assembly', 'Playground Assembly']
         },
         {
           name: 'Carpentry',
           icon: '🪚',
-          services: ['Trim Work', 'Crown Molding', 'Baseboard Installation', 'Door Trim', 'Window Trim', 'Wainscoting', 'Built-in Shelving', 'Custom Closets', 'Deck Repair', 'Fence Repair', 'Gate Repair']
+          services: ['Crown Molding Installation', 'Baseboard Installation', 'Built-in Shelving', 'Custom Closets', 'Deck Repair', 'Fence Repair']
         }
       ]
     },
@@ -338,22 +338,22 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'Kitchen Remodeling',
           icon: '🍳',
-          services: ['Full Kitchen Remodel', 'Kitchen Design', 'Cabinet Installation', 'Cabinet Refacing', 'Countertop Installation', 'Backsplash Installation', 'Kitchen Island', 'Kitchen Flooring', 'Kitchen Lighting', 'Appliance Installation']
+          services: ['Kitchen Remodel', 'Cabinet Installation', 'Cabinet Refacing', 'Countertop Installation', 'Backsplash Installation', 'Kitchen Island Installation']
         },
         {
           name: 'Bathroom Remodeling',
           icon: '🚿',
-          services: ['Full Bathroom Remodel', 'Bathroom Design', 'Shower Installation', 'Bathtub Installation', 'Vanity Installation', 'Tile Installation', 'Bathroom Flooring', 'Bathroom Lighting', 'Accessibility Modifications']
+          services: ['Bathroom Remodel', 'Shower Installation', 'Bathtub Installation', 'Vanity Installation', 'Tile Installation', 'Walk-In Shower Conversion']
         },
         {
           name: 'Additions & Conversions',
           icon: '🏠',
-          services: ['Room Addition', 'Home Addition', 'Second Story Addition', 'Garage Conversion', 'Basement Finishing', 'Attic Conversion', 'ADU Construction', 'In-Law Suite', 'Sunroom Addition']
+          services: ['Room Addition', 'Home Addition', 'Garage Conversion', 'Basement Finishing', 'ADU Construction', 'Sunroom Addition']
         },
         {
           name: 'Whole Home',
           icon: '🏡',
-          services: ['Whole Home Remodel', 'New Construction', 'Custom Home Build', 'Historic Renovation', 'Structural Repair', 'Foundation Repair', 'Demolition', 'Permit Services', 'Project Management']
+          services: ['Whole Home Remodel', 'New Home Construction', 'Foundation Repair', 'Structural Repair', 'Demolition']
         }
       ]
     },
@@ -367,27 +367,27 @@ export const SERVICE_CATEGORIES_V2: AllCategoriesV2 = {
         {
           name: 'Hardwood',
           icon: '🪵',
-          services: ['Hardwood Installation', 'Hardwood Refinishing', 'Hardwood Repair', 'Hardwood Sanding', 'Hardwood Staining', 'Engineered Hardwood Installation', 'Hardwood Floor Cleaning', 'Hardwood Restoration']
+          services: ['Hardwood Installation', 'Hardwood Refinishing', 'Hardwood Repair', 'Engineered Hardwood Installation']
         },
         {
           name: 'Tile',
           icon: '🧱',
-          services: ['Tile Installation', 'Tile Repair', 'Tile Replacement', 'Grout Repair', 'Grout Cleaning', 'Grout Sealing', 'Backsplash Tile', 'Shower Tile', 'Floor Tile', 'Mosaic Tile']
+          services: ['Tile Installation', 'Tile Repair', 'Grout Repair', 'Backsplash Installation', 'Shower Tile Installation']
         },
         {
           name: 'Carpet',
           icon: '🧶',
-          services: ['Carpet Installation', 'Carpet Repair', 'Carpet Stretching', 'Carpet Cleaning', 'Carpet Removal', 'Stair Carpet Installation', 'Carpet Padding']
+          services: ['Carpet Installation', 'Carpet Repair', 'Carpet Stretching', 'Carpet Removal']
         },
         {
           name: 'Vinyl & Laminate',
           icon: '📋',
-          services: ['Vinyl Installation', 'LVP Installation', 'LVT Installation', 'Laminate Installation', 'Vinyl Plank Flooring', 'Sheet Vinyl', 'Vinyl Repair', 'Laminate Repair']
+          services: ['LVP Installation', 'Laminate Installation', 'Vinyl Plank Flooring', 'Sheet Vinyl Installation']
         },
         {
           name: 'Specialty Flooring',
           icon: '✨',
-          services: ['Epoxy Flooring', 'Concrete Polishing', 'Concrete Staining', 'Cork Flooring', 'Bamboo Flooring', 'Linoleum Installation', 'Rubber Flooring', 'Subfloor Repair', 'Floor Leveling']
+          services: ['Epoxy Flooring', 'Concrete Polishing', 'Concrete Staining', 'Floor Leveling']
         }
       ]
     }
