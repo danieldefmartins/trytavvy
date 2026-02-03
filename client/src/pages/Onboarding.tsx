@@ -62,6 +62,27 @@ const COLORS = {
   textDim: '#6B7280',
 };
 
+// Validation helper functions
+function isValidEmail(email: string): boolean {
+  if (!email) return true; // Email is optional
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+}
+
+function isValidPhone(phone: string): boolean {
+  if (!phone) return false; // Phone is required
+  // Remove all non-digit characters and check if we have 10+ digits
+  const digitsOnly = phone.replace(/\D/g, '');
+  return digitsOnly.length >= 10;
+}
+
+function isValidBusinessName(name: string): boolean {
+  if (!name) return false;
+  // Must be at least 2 characters and contain at least one letter
+  const hasLetter = /[a-zA-Z]/.test(name);
+  return name.trim().length >= 2 && hasLetter;
+}
+
 // Provider types
 const PROVIDER_TYPES = [
   { 
@@ -328,7 +349,7 @@ export default function OnboardingNew() {
       case 1: return !!data.providerType;
       case 2: return !!data.primaryCategory;
       case 3: return data.selectedSubcategories.length > 0; // Subcategories
-      case 4: return !!data.businessName && !!data.phone; // Business Info
+      case 4: return isValidBusinessName(data.businessName) && isValidPhone(data.phone) && isValidEmail(data.email); // Business Info with validation
       case 5: return data.locationType === 'mobile' ? data.serviceAreas.length > 0 : (!!data.city && !!data.state && !!data.zipCode); // Location
       case 6: return true; // Hours are optional
       case 7: return data.services.length > 0; // Services
@@ -551,13 +572,13 @@ export default function OnboardingNew() {
     </div>
   );
 
-  // Step 2: Category Selection with Search
+  // Step 2: Category Selection - Show all categories directly
   const Step2Categories = () => {
     const allCategories = CATEGORIES_DATA[data.providerType as keyof typeof CATEGORIES_DATA] || [];
-    const featuredCategories = getFeaturedCategories(data.providerType);
     const searchResults = categorySearch ? searchCategories(data.providerType, categorySearch) : [];
     const showSearch = categorySearch.length > 0;
-    const displayCategories = showSearch ? searchResults : featuredCategories;
+    // Show all categories by default (since there are only ~11)
+    const displayCategories = showSearch ? searchResults : allCategories;
     
     const handleCategorySelect = (catName: string) => {
       updateData({ 
@@ -578,45 +599,45 @@ export default function OnboardingNew() {
           </p>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search 
-            className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" 
-            style={{ color: COLORS.textMuted }} 
-          />
-          <input
-            type="text"
-            className="flex h-12 w-full rounded-xl border px-3 py-2 pl-11 text-base"
-            placeholder="Search for a category (e.g., plumbing, roofing, landscaping...)"
-            value={categorySearch}
-            onChange={(e) => setCategorySearch(e.target.value)}
-            style={{ 
-              backgroundColor: COLORS.backgroundCard,
-              borderColor: COLORS.border,
-              color: COLORS.text
-            }}
-          />
-          {categorySearch && (
-            <button
-              onClick={() => setCategorySearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
-            >
-              <X className="h-5 w-5" style={{ color: COLORS.textMuted }} />
-            </button>
-          )}
-        </div>
+        {/* Search Bar - only show if many categories */}
+        {allCategories.length > 15 && (
+          <div className="relative">
+            <Search 
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" 
+              style={{ color: COLORS.textMuted }} 
+            />
+            <input
+              type="text"
+              className="flex h-12 w-full rounded-xl border px-3 py-2 pl-11 text-base"
+              placeholder="Search for a category (e.g., plumbing, roofing, landscaping...)"
+              value={categorySearch}
+              onChange={(e) => setCategorySearch(e.target.value)}
+              style={{ 
+                backgroundColor: COLORS.backgroundCard,
+                borderColor: COLORS.border,
+                color: COLORS.text
+              }}
+            />
+            {categorySearch && (
+              <button
+                onClick={() => setCategorySearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <X className="h-5 w-5" style={{ color: COLORS.textMuted }} />
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Category Results */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label style={{ color: COLORS.textMuted }}>
-              {showSearch ? `Search Results (${searchResults.length})` : 'Popular Categories'}
+              {showSearch ? `Search Results (${searchResults.length})` : 'All Categories'}
             </Label>
-            {!showSearch && (
-              <span className="text-sm" style={{ color: COLORS.textDim }}>
-                {allCategories.length} total categories
-              </span>
-            )}
+            <span className="text-sm" style={{ color: COLORS.textDim }}>
+              {displayCategories.length} categories
+            </span>
           </div>
           
           {displayCategories.length === 0 && showSearch && (
@@ -626,7 +647,7 @@ export default function OnboardingNew() {
             </div>
           )}
           
-          <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto">
+          <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto">
             {displayCategories.map((cat) => {
               const isSelected = data.primaryCategory === cat.name;
               
@@ -648,11 +669,9 @@ export default function OnboardingNew() {
                       <span className="font-medium block truncate" style={{ color: COLORS.text }}>
                         {cat.name}
                       </span>
-                      {showSearch && cat.subcategories.length > 0 && (
-                        <span className="text-xs truncate block" style={{ color: COLORS.textDim }}>
-                          {cat.subcategories.slice(0, 3).join(', ')}...
-                        </span>
-                      )}
+                      <span className="text-xs" style={{ color: COLORS.textDim }}>
+                        {cat.subcategories.length} subcategories
+                      </span>
                     </div>
                     {isSelected && (
                       <CheckCircle className="h-5 w-5 flex-shrink-0" style={{ color: COLORS.teal }} />
@@ -662,23 +681,6 @@ export default function OnboardingNew() {
               );
             })}
           </div>
-          
-          {/* Show all categories link */}
-          {!showSearch && (
-            <button
-              onClick={() => setCategorySearch(' ')}
-              className="w-full py-3 text-center rounded-xl border transition-all hover:bg-opacity-10"
-              style={{ 
-                borderColor: COLORS.border,
-                color: COLORS.teal
-              }}
-            >
-              <span className="flex items-center justify-center gap-2">
-                <Search className="h-4 w-4" />
-                Browse all {allCategories.length} categories
-              </span>
-            </button>
-          )}
         </div>
 
         {/* Selected Primary Category */}
@@ -809,70 +811,84 @@ export default function OnboardingNew() {
   };
 
   // Step 4: Business Info
-  const Step4BusinessInfo = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.teal}20` }}>
-          <Building2 className="h-8 w-8" style={{ color: COLORS.teal }} />
-        </div>
-        <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
-          Business Information
-        </h1>
-        <p style={{ color: COLORS.textMuted }}>
-          Tell us about your business
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="businessName" style={{ color: COLORS.textMuted }}>Business Name *</Label>
-          <input
-            id="businessName"
-            className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
-            placeholder="ABC Plumbing Services"
-            defaultValue={data.businessName}
-            onBlur={(e) => updateData({ businessName: e.target.value })}
-            style={{ 
-              backgroundColor: COLORS.backgroundCard,
-              borderColor: COLORS.border,
-              color: COLORS.text
-            }}
-          />
+  const Step4BusinessInfo = () => {
+    const businessNameError = data.businessName && !isValidBusinessName(data.businessName);
+    const phoneError = data.phone && !isValidPhone(data.phone);
+    const emailError = data.email && !isValidEmail(data.email);
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.teal}20` }}>
+            <Building2 className="h-8 w-8" style={{ color: COLORS.teal }} />
+          </div>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
+            Business Information
+          </h1>
+          <p style={{ color: COLORS.textMuted }}>
+            Tell us about your business
+          </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="phone" style={{ color: COLORS.textMuted }}>Phone Number *</Label>
-          <input
-            id="phone"
-            className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
-            type="tel"
-            placeholder="(555) 123-4567"
-            defaultValue={data.phone}
-            onBlur={(e) => updateData({ phone: e.target.value })}
-            style={{ 
-              backgroundColor: COLORS.backgroundCard,
-              borderColor: COLORS.border,
-              color: COLORS.text
-            }}
-          />
-        </div>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="businessName" style={{ color: COLORS.textMuted }}>Business Name *</Label>
+            <input
+              id="businessName"
+              className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+              placeholder="ABC Plumbing Services"
+              defaultValue={data.businessName}
+              onBlur={(e) => updateData({ businessName: e.target.value })}
+              style={{ 
+                backgroundColor: COLORS.backgroundCard,
+                borderColor: businessNameError ? COLORS.red : COLORS.border,
+                color: COLORS.text
+              }}
+            />
+            {businessNameError && (
+              <p className="text-xs" style={{ color: COLORS.red }}>Please enter a valid business name (at least 2 characters with letters)</p>
+            )}
+          </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email" style={{ color: COLORS.textMuted }}>Business Email</Label>
-          <input
-            id="email"
-            className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
-            type="email"
-            placeholder="contact@yourbusiness.com"
-            defaultValue={data.email}
-            onBlur={(e) => updateData({ email: e.target.value })}
-            style={{ 
-              backgroundColor: COLORS.backgroundCard,
-              borderColor: COLORS.border,
-              color: COLORS.text
-            }}
-          />
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone" style={{ color: COLORS.textMuted }}>Phone Number *</Label>
+            <input
+              id="phone"
+              className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+              type="tel"
+              placeholder="(555) 123-4567"
+              defaultValue={data.phone}
+              onBlur={(e) => updateData({ phone: e.target.value })}
+              style={{ 
+                backgroundColor: COLORS.backgroundCard,
+                borderColor: phoneError ? COLORS.red : COLORS.border,
+                color: COLORS.text
+              }}
+            />
+            {phoneError && (
+              <p className="text-xs" style={{ color: COLORS.red }}>Please enter a valid phone number (at least 10 digits)</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email" style={{ color: COLORS.textMuted }}>Business Email (optional)</Label>
+            <input
+              id="email"
+              className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+              type="email"
+              placeholder="contact@yourbusiness.com"
+              defaultValue={data.email}
+              onBlur={(e) => updateData({ email: e.target.value })}
+              style={{ 
+                backgroundColor: COLORS.backgroundCard,
+                borderColor: emailError ? COLORS.red : COLORS.border,
+                color: COLORS.text
+              }}
+            />
+            {emailError && (
+              <p className="text-xs" style={{ color: COLORS.red }}>Please enter a valid email address (e.g., name@example.com)</p>
+            )}
+          </div>
 
         <div className="space-y-2">
           <Label htmlFor="website" style={{ color: COLORS.textMuted }}>Website (optional)</Label>
@@ -911,9 +927,10 @@ export default function OnboardingNew() {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
-  // Step 4: Location & Service Area
+  // Step 5: Location & Service Area
   const Step5Location = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
