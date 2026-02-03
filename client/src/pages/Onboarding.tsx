@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -651,11 +651,12 @@ export default function OnboardingNew() {
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="businessName" style={{ color: COLORS.textMuted }}>Business Name *</Label>
-          <Input
+          <input
             id="businessName"
+            className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
             placeholder="ABC Plumbing Services"
-            value={data.businessName}
-            onChange={(e) => updateData({ businessName: e.target.value })}
+            defaultValue={data.businessName}
+            onBlur={(e) => updateData({ businessName: e.target.value })}
             style={{ 
               backgroundColor: COLORS.backgroundCard,
               borderColor: COLORS.border,
@@ -666,12 +667,13 @@ export default function OnboardingNew() {
 
         <div className="space-y-2">
           <Label htmlFor="phone" style={{ color: COLORS.textMuted }}>Phone Number *</Label>
-          <Input
+          <input
             id="phone"
+            className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
             type="tel"
             placeholder="(555) 123-4567"
-            value={data.phone}
-            onChange={(e) => updateData({ phone: e.target.value })}
+            defaultValue={data.phone}
+            onBlur={(e) => updateData({ phone: e.target.value })}
             style={{ 
               backgroundColor: COLORS.backgroundCard,
               borderColor: COLORS.border,
@@ -682,12 +684,13 @@ export default function OnboardingNew() {
 
         <div className="space-y-2">
           <Label htmlFor="email" style={{ color: COLORS.textMuted }}>Business Email</Label>
-          <Input
+          <input
             id="email"
+            className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
             type="email"
             placeholder="contact@yourbusiness.com"
-            value={data.email}
-            onChange={(e) => updateData({ email: e.target.value })}
+            defaultValue={data.email}
+            onBlur={(e) => updateData({ email: e.target.value })}
             style={{ 
               backgroundColor: COLORS.backgroundCard,
               borderColor: COLORS.border,
@@ -698,12 +701,13 @@ export default function OnboardingNew() {
 
         <div className="space-y-2">
           <Label htmlFor="website" style={{ color: COLORS.textMuted }}>Website (optional)</Label>
-          <Input
+          <input
             id="website"
+            className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
             type="url"
             placeholder="https://yourbusiness.com"
-            value={data.website}
-            onChange={(e) => updateData({ website: e.target.value })}
+            defaultValue={data.website}
+            onBlur={(e) => updateData({ website: e.target.value })}
             style={{ 
               backgroundColor: COLORS.backgroundCard,
               borderColor: COLORS.border,
@@ -714,14 +718,15 @@ export default function OnboardingNew() {
 
         <div className="space-y-2">
           <Label htmlFor="yearEstablished" style={{ color: COLORS.textMuted }}>Year Established</Label>
-          <Input
+          <input
             id="yearEstablished"
+            className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
             type="number"
             placeholder="2015"
-            min="1900"
+            min={1900}
             max={new Date().getFullYear()}
-            value={data.yearEstablished}
-            onChange={(e) => updateData({ yearEstablished: e.target.value })}
+            defaultValue={data.yearEstablished}
+            onBlur={(e) => updateData({ yearEstablished: e.target.value })}
             style={{ 
               backgroundColor: COLORS.backgroundCard,
               borderColor: COLORS.border,
@@ -1369,20 +1374,27 @@ export default function OnboardingNew() {
     );
   };
 
+  // Render step content - using key prop to maintain input focus
   const renderStep = () => {
-    switch (data.currentStep) {
-      case 1: return <Step1ProviderType />;
-      case 2: return <Step2Categories />;
-      case 3: return <Step3BusinessInfo />;
-      case 4: return <Step4Location />;
-      case 5: return <Step5Hours />;
-      case 6: return <Step6Services />;
-      case 7: return <Step7Photos />;
-      case 8: return <Step8Highlights />;
-      case 9: return <Step9Bio />;
-      case 10: return <Step10Review />;
-      default: return null;
-    }
+    // Wrap each step in a div with a stable key to prevent remounting
+    const stepContent = (() => {
+      switch (data.currentStep) {
+        case 1: return Step1ProviderType();
+        case 2: return Step2Categories();
+        case 3: return Step3BusinessInfo();
+        case 4: return Step4Location();
+        case 5: return Step5Hours();
+        case 6: return Step6Services();
+        case 7: return Step7Photos();
+        case 8: return Step8Highlights();
+        case 9: return Step9Bio();
+        case 10: return Step10Review();
+        default: return null;
+      }
+    })();
+    
+    // Key is based on step number only, not on data values
+    return <div key={`step-${data.currentStep}`}>{stepContent}</div>;
   };
 
   return (
