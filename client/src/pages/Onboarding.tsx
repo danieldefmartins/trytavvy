@@ -1370,8 +1370,23 @@ function OnboardingContent() {
     const [newService, setNewService] = useState({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
 
     // Ensure services is always an array with valid objects
+    // Handle both string and object formats from database
     const services = Array.isArray(data.services) 
-      ? data.services.filter(s => s && typeof s === 'object')
+      ? data.services.map(s => {
+          if (typeof s === 'string') {
+            return { name: s, description: '', priceType: 'quote', priceMin: '', priceMax: '' };
+          }
+          if (s && typeof s === 'object') {
+            return {
+              name: String(s.name || ''),
+              description: String(s.description || ''),
+              priceType: String(s.priceType || 'quote'),
+              priceMin: String(s.priceMin || ''),
+              priceMax: String(s.priceMax || '')
+            };
+          }
+          return null;
+        }).filter((s): s is {name: string; description: string; priceType: string; priceMin: string; priceMax: string} => s !== null && s.name !== '')
       : [];
     
     // Get suggested services from selected subcategories using V2 data structure
