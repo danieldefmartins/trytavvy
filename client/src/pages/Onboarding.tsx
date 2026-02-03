@@ -42,6 +42,7 @@ import {
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/lib/supabase";
 import { SERVICE_CATEGORIES as CATEGORIES_DATA, searchCategories, getFeaturedCategories, ServiceCategory } from "@/data/serviceCategories";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 // Brand colors matching the existing theme
 const COLORS = {
@@ -159,6 +160,7 @@ interface OnboardingData {
   // Step 4: Location
   locationType: 'fixed' | 'mobile';
   address: string;
+  address2: string;
   city: string;
   state: string;
   zipCode: string;
@@ -204,6 +206,7 @@ const initialData: OnboardingData = {
   yearEstablished: '',
   locationType: 'fixed',
   address: '',
+  address2: '',
   city: '',
   state: '',
   zipCode: '',
@@ -905,60 +908,40 @@ export default function OnboardingNew() {
 
       {data.locationType === 'fixed' ? (
         <div className="space-y-4">
+          <AddressAutocomplete
+            value={{
+              address: data.address,
+              address2: data.address2,
+              city: data.city,
+              state: data.state,
+              zipCode: data.zipCode,
+              country: 'US',
+            }}
+            onChange={(addr) => updateData({
+              address: addr.address,
+              address2: addr.address2,
+              city: addr.city,
+              state: addr.state,
+              zipCode: addr.zipCode,
+            })}
+            inputStyle={{ 
+              backgroundColor: COLORS.backgroundCard,
+              borderColor: COLORS.border,
+              color: COLORS.text
+            }}
+            labelStyle={{ color: COLORS.textMuted }}
+          />
+          
           <div className="space-y-2">
-            <Label htmlFor="address" style={{ color: COLORS.textMuted }}>Street Address</Label>
+            <Label htmlFor="serviceRadius" style={{ color: COLORS.textMuted }}>Service Radius (miles)</Label>
             <Input
-              id="address"
-              placeholder="123 Main Street"
-              value={data.address}
-              onChange={(e) => updateData({ address: e.target.value })}
+              id="serviceRadius"
+              type="number"
+              placeholder="25"
+              value={data.serviceRadius}
+              onChange={(e) => updateData({ serviceRadius: parseInt(e.target.value) || 25 })}
               style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
             />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="city" style={{ color: COLORS.textMuted }}>City *</Label>
-              <Input
-                id="city"
-                placeholder="Miami"
-                value={data.city}
-                onChange={(e) => updateData({ city: e.target.value })}
-                style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="state" style={{ color: COLORS.textMuted }}>State *</Label>
-              <Input
-                id="state"
-                placeholder="FL"
-                value={data.state}
-                onChange={(e) => updateData({ state: e.target.value })}
-                style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="zipCode" style={{ color: COLORS.textMuted }}>ZIP Code *</Label>
-              <Input
-                id="zipCode"
-                placeholder="33101"
-                value={data.zipCode}
-                onChange={(e) => updateData({ zipCode: e.target.value })}
-                style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="serviceRadius" style={{ color: COLORS.textMuted }}>Service Radius (miles)</Label>
-              <Input
-                id="serviceRadius"
-                type="number"
-                placeholder="25"
-                value={data.serviceRadius}
-                onChange={(e) => updateData({ serviceRadius: parseInt(e.target.value) || 25 })}
-                style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
-              />
-            </div>
           </div>
         </div>
       ) : (
@@ -1089,11 +1072,25 @@ export default function OnboardingNew() {
   const Step6Services = () => {
     const [newService, setNewService] = useState({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
 
+    // Get suggested services from selected category subcategories
+    const allCategories = CATEGORIES_DATA[data.providerType as keyof typeof CATEGORIES_DATA] || [];
+    const primaryCat = allCategories.find(c => c.name === data.primaryCategory);
+    const secondaryCats = allCategories.filter(c => data.secondaryCategories.includes(c.name));
+    const suggestedServices = [
+      ...(primaryCat?.subcategories || []),
+      ...secondaryCats.flatMap(c => c.subcategories)
+    ].filter((s, i, arr) => arr.indexOf(s) === i) // Remove duplicates
+     .filter(s => !data.services.some(svc => svc.name.toLowerCase() === s.toLowerCase())); // Remove already added
+
     const addService = () => {
       if (newService.name.trim()) {
         updateData({ services: [...data.services, newService] });
         setNewService({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
       }
+    };
+
+    const addSuggestedService = (serviceName: string) => {
+      updateData({ services: [...data.services, { name: serviceName, description: '', priceType: 'quote', priceMin: '', priceMax: '' }] });
     };
 
     return (
@@ -1109,6 +1106,30 @@ export default function OnboardingNew() {
             Add at least 3 services to help customers find you
           </p>
         </div>
+
+        {/* Suggested Services */}
+        {suggestedServices.length > 0 && data.services.length < 10 && (
+          <div className="space-y-3">
+            <Label style={{ color: COLORS.textMuted }}>Quick Add from {data.primaryCategory}</Label>
+            <div className="flex flex-wrap gap-2">
+              {suggestedServices.slice(0, 8).map((service) => (
+                <button
+                  key={service}
+                  onClick={() => addSuggestedService(service)}
+                  className="px-3 py-1.5 rounded-full text-sm flex items-center gap-1 transition-all hover:scale-105"
+                  style={{ 
+                    backgroundColor: `${COLORS.teal}15`,
+                    border: `1px solid ${COLORS.teal}40`,
+                    color: COLORS.teal
+                  }}
+                >
+                  <Plus className="h-3 w-3" />
+                  {service}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Existing Services */}
         {data.services.length > 0 && (
