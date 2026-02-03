@@ -1335,74 +1335,14 @@ function OnboardingContent() {
     );
   };
 
-  // Step 6: Services
+  // Step 6: Services - MINIMAL TEST VERSION
   const Step7Services = () => {
-    // Debug: Log all data at the start of render
-    console.log('Step7Services CHECKPOINT 1 - before useState');
+    console.log('Step7Services - MINIMAL VERSION RENDERING');
     
-    const [newService, setNewService] = useState({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
-    
-    console.log('Step7Services CHECKPOINT 2 - after useState');
-
-    // Ensure services is always an array with valid objects
-    // Handle both string and object formats from database
-    const services = Array.isArray(data.services) 
-      ? data.services.map(s => {
-          if (typeof s === 'string') {
-            return { name: s, description: '', priceType: 'quote', priceMin: '', priceMax: '' };
-          }
-          if (s && typeof s === 'object') {
-            return {
-              name: String(s.name || ''),
-              description: String(s.description || ''),
-              priceType: String(s.priceType || 'quote'),
-              priceMin: String(s.priceMin || ''),
-              priceMax: String(s.priceMax || '')
-            };
-          }
-          return null;
-        }).filter((s): s is {name: string; description: string; priceType: string; priceMin: string; priceMax: string} => s !== null && s.name !== '')
-      : [];
-    
-    // Get suggested services from selected subcategories using V2 data structure
-    // Add defensive checks for every step
-    let suggestedServices: string[] = [];
-    try {
-      const providerType = data.providerType || 'pro';
-      const categories = getCategoriesForProviderType(providerType);
-      const category = Array.isArray(categories) ? categories.find(c => c?.name === data.primaryCategory) : null;
-      const selectedSubcats = Array.isArray(data.selectedSubcategories) ? data.selectedSubcategories : [];
-      const subcategories = category?.subcategories;
-      const selectedSubs = Array.isArray(subcategories) 
-        ? subcategories.filter(sub => sub && selectedSubcats.includes(sub.name)) 
-        : [];
-      suggestedServices = selectedSubs
-        .flatMap(sub => Array.isArray(sub?.services) ? sub.services : [])
-        .filter((s): s is string => typeof s === 'string')
-        .filter((s, i, arr) => arr.indexOf(s) === i) // Remove duplicates
-        .filter(s => !services.some(svc => svc?.name?.toLowerCase() === s.toLowerCase())); // Remove already added
-    } catch (err) {
-      console.error('Error getting suggested services:', err);
-      suggestedServices = [];
-    }
-
-    const addService = () => {
-      if (newService.name.trim()) {
-        updateData({ services: [...services, newService] });
-        setNewService({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
-      }
-    };
-
-    const addSuggestedService = (serviceName: string) => {
-      updateData({ services: [...services, { name: serviceName, description: '', priceType: 'quote', priceMin: '', priceMax: '' }] });
-    };
-
+    // Return a simple static component with no state or complex logic
     return (
       <div className="space-y-6">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.teal}20` }}>
-            <Briefcase className="h-8 w-8" style={{ color: COLORS.teal }} />
-          </div>
           <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
             Services You Offer
           </h1>
@@ -1410,127 +1350,10 @@ function OnboardingContent() {
             Add at least 3 services to help customers find you
           </p>
         </div>
-
-        {/* Suggested Services */}
-        {suggestedServices.length > 0 && services.length < 10 && (
-          <div className="space-y-3">
-            <Label style={{ color: COLORS.textMuted }}>Quick Add from your category</Label>
-            <div className="flex flex-wrap gap-2">
-              {suggestedServices.slice(0, 8).map((service) => (
-                <button
-                  key={String(service)}
-                  onClick={() => addSuggestedService(String(service))}
-                  className="px-3 py-1.5 rounded-full text-sm flex items-center gap-1 transition-all hover:scale-105"
-                  style={{ 
-                    backgroundColor: `${COLORS.teal}15`,
-                    border: `1px solid ${COLORS.teal}40`,
-                    color: COLORS.teal
-                  }}
-                >
-                  <Plus className="h-3 w-3" />
-                  {String(service)}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Existing Services */}
-        {services.length > 0 && (
-          <div className="space-y-3">
-            {services.map((service, idx) => (
-              <div
-                key={idx}
-                className="p-4 rounded-xl flex items-center justify-between"
-                style={{ backgroundColor: COLORS.backgroundCard }}
-              >
-                <div>
-                  <h4 className="font-medium" style={{ color: COLORS.text }}>{String(service.name || '')}</h4>
-                  {service.description && (
-                    <p className="text-sm" style={{ color: COLORS.textMuted }}>{String(service.description || '')}</p>
-                  )}
-                  <p className="text-sm" style={{ color: COLORS.teal }}>
-                    {String(service.priceType) === 'quote' ? 'Quote' : 
-                     String(service.priceType) === 'fixed' ? `$${String(service.priceMin || '')}` :
-                     `$${String(service.priceMin || '')} - $${String(service.priceMax || '')}`}
-                  </p>
-                </div>
-                <button
-                  onClick={() => updateData({ services: services.filter((_, i) => i !== idx) })}
-                  style={{ color: COLORS.red }}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Add New Service */}
-        <div className="p-4 rounded-xl space-y-4" style={{ backgroundColor: COLORS.backgroundCard, border: `1px dashed ${COLORS.border}` }}>
-          <Input
-            placeholder="Service name (e.g., Drain Cleaning)"
-            value={newService.name}
-            onChange={(e) => setNewService({ ...newService, name: e.target.value })}
-            style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
-          />
-          <Textarea
-            placeholder="Brief description (optional)"
-            value={newService.description}
-            onChange={(e) => setNewService({ ...newService, description: e.target.value })}
-            rows={2}
-            style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
-          />
-          <div className="flex gap-2">
-            <select
-              value={newService.priceType}
-              onChange={(e) => setNewService({ ...newService, priceType: e.target.value })}
-              className="px-3 py-2 rounded-md"
-              style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text, border: `1px solid ${COLORS.border}` }}
-            >
-              <option value="quote">Request Quote</option>
-              <option value="fixed">Fixed Price</option>
-              <option value="range">Price Range</option>
-            </select>
-            {newService.priceType !== 'quote' && (
-              <>
-                <Input
-                  type="number"
-                  placeholder={newService.priceType === 'fixed' ? 'Price' : 'Min'}
-                  value={newService.priceMin}
-                  onChange={(e) => setNewService({ ...newService, priceMin: e.target.value })}
-                  className="w-24"
-                  style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
-                />
-                {newService.priceType === 'range' && (
-                  <Input
-                    type="number"
-                    placeholder="Max"
-                    value={newService.priceMax}
-                    onChange={(e) => setNewService({ ...newService, priceMax: e.target.value })}
-                    className="w-24"
-                    style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
-                  />
-                )}
-              </>
-            )}
-          </div>
-          <Button
-            onClick={addService}
-            disabled={!newService.name.trim()}
-            className="w-full gap-2"
-            style={{ backgroundColor: COLORS.teal, color: 'black' }}
-          >
-            <Plus className="h-4 w-4" />
-            Add Service
-          </Button>
+        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.backgroundCard }}>
+          <p style={{ color: COLORS.text }}>This is a minimal test version of Step 7.</p>
+          <p style={{ color: COLORS.textMuted }}>If you see this, the basic rendering works.</p>
         </div>
-
-        {services.length < 3 && (
-          <p className="text-sm text-center" style={{ color: COLORS.gold }}>
-            Add {3 - services.length} more service{3 - services.length > 1 ? 's' : ''} to improve your profile
-          </p>
-        )}
       </div>
     );
   };
