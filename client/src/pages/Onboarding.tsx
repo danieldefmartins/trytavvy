@@ -1381,8 +1381,12 @@ export default function OnboardingNew() {
   };
 
   // Step 7: Photos & Media
-  const Step8Photos = () => (
-    <div className="space-y-6">
+  const Step8Photos = () => {
+    // Ensure workPhotos is always an array
+    const workPhotos = Array.isArray(data.workPhotos) ? data.workPhotos : [];
+    
+    return (
+      <div className="space-y-6">
       <div className="text-center mb-8">
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.gold}20` }}>
           <Camera className="h-8 w-8" style={{ color: COLORS.gold }} />
@@ -1441,8 +1445,8 @@ export default function OnboardingNew() {
               className="aspect-square rounded-xl flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
               style={{ backgroundColor: COLORS.backgroundCard, border: `2px dashed ${COLORS.border}` }}
             >
-              {data.workPhotos[idx] ? (
-                <img src={data.workPhotos[idx]} alt={`Work ${idx + 1}`} className="w-full h-full rounded-xl object-cover" />
+              {workPhotos[idx] ? (
+                <img src={workPhotos[idx]} alt={`Work ${idx + 1}`} className="w-full h-full rounded-xl object-cover" />
               ) : (
                 <Plus className="h-6 w-6" style={{ color: COLORS.textDim }} />
               )}
@@ -1454,38 +1458,43 @@ export default function OnboardingNew() {
         </p>
       </div>
     </div>
-  );
+    );
+  };
 
   // Step 8: Business Highlights
-  const Step9Highlights = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.green}20` }}>
-          <Award className="h-8 w-8" style={{ color: COLORS.green }} />
+  const Step9Highlights = () => {
+    // Ensure highlights is always an array
+    const highlights = Array.isArray(data.highlights) ? data.highlights : [];
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.green}20` }}>
+            <Award className="h-8 w-8" style={{ color: COLORS.green }} />
+          </div>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
+            Business Highlights
+          </h1>
+          <p style={{ color: COLORS.textMuted }}>
+            Show customers what makes you stand out
+          </p>
         </div>
-        <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
-          Business Highlights
-        </h1>
-        <p style={{ color: COLORS.textMuted }}>
-          Show customers what makes you stand out
-        </p>
-      </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {BUSINESS_HIGHLIGHTS.map((highlight) => {
-          const Icon = highlight.icon;
-          const isSelected = data.highlights.includes(highlight.id);
-          
-          return (
-            <button
-              key={highlight.id}
-              onClick={() => {
-                if (isSelected) {
-                  updateData({ highlights: data.highlights.filter(h => h !== highlight.id) });
-                } else {
-                  updateData({ highlights: [...data.highlights, highlight.id] });
-                }
-              }}
+        <div className="grid grid-cols-2 gap-3">
+          {BUSINESS_HIGHLIGHTS.map((highlight) => {
+            const Icon = highlight.icon;
+            const isSelected = highlights.includes(highlight.id);
+            
+            return (
+              <button
+                key={highlight.id}
+                onClick={() => {
+                  if (isSelected) {
+                    updateData({ highlights: highlights.filter(h => h !== highlight.id) });
+                  } else {
+                    updateData({ highlights: [...highlights, highlight.id] });
+                  }
+                }}
               className={`p-4 rounded-xl border transition-all text-left`}
               style={{
                 backgroundColor: isSelected ? `${COLORS.green}15` : COLORS.backgroundCard,
@@ -1504,7 +1513,7 @@ export default function OnboardingNew() {
         })}
       </div>
 
-      {data.highlights.includes('licensed') && (
+      {highlights.includes('licensed') && (
         <div className="space-y-4 p-4 rounded-xl" style={{ backgroundColor: COLORS.backgroundCard }}>
           <h4 className="font-medium" style={{ color: COLORS.text }}>License Information</h4>
           <div className="grid grid-cols-2 gap-4">
@@ -1530,44 +1539,50 @@ export default function OnboardingNew() {
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   // Step 9: Bio & Description
-  const Step10Bio = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.teal}20` }}>
-          <FileText className="h-8 w-8" style={{ color: COLORS.teal }} />
-        </div>
-        <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
-          Tell Your Story
-        </h1>
-        <p style={{ color: COLORS.textMuted }}>
-          Help customers get to know you
-        </p>
-      </div>
-
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label style={{ color: COLORS.textMuted }}>Short Bio * (displayed in search results)</Label>
-          <Textarea
-            placeholder="Family-owned plumbing business serving Miami for 20+ years. Licensed, insured, and committed to quality."
-            value={data.shortBio}
-            onChange={(e) => updateData({ shortBio: e.target.value })}
-            rows={3}
-            maxLength={200}
-            style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
-          />
-          <p className="text-xs text-right" style={{ color: COLORS.textDim }}>
-            {data.shortBio.length}/200 characters
+  const Step10Bio = () => {
+    // Ensure strings are always valid
+    const shortBio = data.shortBio || '';
+    const fullDescription = data.fullDescription || '';
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.teal}20` }}>
+            <FileText className="h-8 w-8" style={{ color: COLORS.teal }} />
+          </div>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
+            Tell Your Story
+          </h1>
+          <p style={{ color: COLORS.textMuted }}>
+            Help customers get to know you
           </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label style={{ color: COLORS.textMuted }}>Short Bio * (displayed in search results)</Label>
+            <Textarea
+              placeholder="Family-owned plumbing business serving Miami for 20+ years. Licensed, insured, and committed to quality."
+              value={shortBio}
+              onChange={(e) => updateData({ shortBio: e.target.value })}
+              rows={3}
+              maxLength={200}
+              style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
+            />
+            <p className="text-xs text-right" style={{ color: COLORS.textDim }}>
+              {shortBio.length}/200 characters
+            </p>
         </div>
 
         <div className="space-y-2">
           <Label style={{ color: COLORS.textMuted }}>Full Description (displayed on your profile)</Label>
           <Textarea
             placeholder="Tell customers more about your business, your experience, what makes you different, and why they should choose you..."
-            value={data.fullDescription}
+            value={fullDescription}
             onChange={(e) => updateData({ fullDescription: e.target.value })}
             rows={6}
             style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
@@ -1575,17 +1590,24 @@ export default function OnboardingNew() {
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   // Step 10: Review & Complete
   const Step11Review = () => {
+    // Ensure arrays are always valid
+    const workPhotos = Array.isArray(data.workPhotos) ? data.workPhotos : [];
+    const services = Array.isArray(data.services) ? data.services : [];
+    const highlights = Array.isArray(data.highlights) ? data.highlights : [];
+    const serviceAreas = Array.isArray(data.serviceAreas) ? data.serviceAreas : [];
+    
     const getMissingItems = () => {
       const missing = [];
       if (!data.profilePhoto) missing.push({ item: 'Profile Photo', impact: 'high', tip: 'Profiles with photos get 3x more views' });
       if (!data.coverPhoto) missing.push({ item: 'Cover Photo', impact: 'medium', tip: 'Make your profile stand out' });
-      if (data.workPhotos.length < 3) missing.push({ item: 'Work Photos', impact: 'high', tip: `Add ${3 - data.workPhotos.length} more photos to showcase your work` });
-      if (data.services.length < 3) missing.push({ item: 'Services', impact: 'high', tip: `Add ${3 - data.services.length} more services to appear in more searches` });
-      if (data.highlights.length === 0) missing.push({ item: 'Business Highlights', impact: 'medium', tip: 'Show badges like Licensed, Insured, etc.' });
+      if (workPhotos.length < 3) missing.push({ item: 'Work Photos', impact: 'high', tip: `Add ${3 - workPhotos.length} more photos to showcase your work` });
+      if (services.length < 3) missing.push({ item: 'Services', impact: 'high', tip: `Add ${3 - services.length} more services to appear in more searches` });
+      if (highlights.length === 0) missing.push({ item: 'Business Highlights', impact: 'medium', tip: 'Show badges like Licensed, Insured, etc.' });
       if (!data.website) missing.push({ item: 'Website', impact: 'low', tip: 'Add your website for credibility' });
       if (!data.fullDescription) missing.push({ item: 'Full Description', impact: 'medium', tip: 'Tell customers more about your business' });
       return missing;
@@ -1625,11 +1647,11 @@ export default function OnboardingNew() {
             </div>
             <div className="flex justify-between">
               <span style={{ color: COLORS.textMuted }}>Location</span>
-              <span style={{ color: COLORS.text }}>{data.city && data.state ? `${data.city}, ${data.state}` : data.serviceAreas.join(', ') || '-'}</span>
+              <span style={{ color: COLORS.text }}>{data.city && data.state ? `${data.city}, ${data.state}` : serviceAreas.join(', ') || '-'}</span>
             </div>
             <div className="flex justify-between">
               <span style={{ color: COLORS.textMuted }}>Services</span>
-              <span style={{ color: COLORS.text }}>{data.services.length} added</span>
+              <span style={{ color: COLORS.text }}>{services.length} added</span>
             </div>
           </div>
         </div>
