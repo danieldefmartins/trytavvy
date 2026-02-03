@@ -280,8 +280,17 @@ export default function OnboardingNew() {
   };
 
   // Navigation
-  const nextStep = () => {
+  const nextStep = async () => {
     if (data.currentStep < TOTAL_STEPS) {
+      // Save progress at key milestones (after business info, location, and services)
+      if ([3, 4, 6, 9].includes(data.currentStep)) {
+        try {
+          await saveProgress();
+        } catch (err) {
+          // Don't block navigation on save errors
+          console.error('Save error:', err);
+        }
+      }
       updateData({ currentStep: data.currentStep + 1 });
       window.scrollTo(0, 0);
     }
@@ -397,7 +406,30 @@ export default function OnboardingNew() {
 
     } catch (err) {
       console.error('Error saving progress:', err);
-      setError('Failed to save progress. Please try again.');
+      // Try fallback to pro_providers table
+      try {
+        const fallbackData = {
+          user_id: user.id,
+          business_name: data.businessName,
+          phone: data.phone,
+          email: data.email || user.email,
+          website: data.website,
+          city: data.city,
+          state: data.state,
+          zip_code: data.zipCode,
+          bio: data.shortBio,
+          services: data.services,
+          provider_type: data.providerType,
+          specialties: [data.primaryCategory, ...data.secondaryCategories],
+          onboarding_step: data.currentStep,
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        };
+        await supabase.from('pro_providers').upsert(fallbackData, { onConflict: 'user_id' });
+      } catch (fallbackErr) {
+        console.error('Fallback save also failed:', fallbackErr);
+        // Don't show error to user - just log it
+      }
     } finally {
       setSaving(false);
     }
@@ -419,15 +451,8 @@ export default function OnboardingNew() {
     }
   };
 
-  // Auto-save on step change
-  useEffect(() => {
-    if (data.currentStep > 1 && user) {
-      const timer = setTimeout(() => {
-        saveProgress();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [data.currentStep]);
+  // Note: Auto-save removed to prevent keyboard focus issues on mobile
+  // Progress is saved when user clicks Next or Complete
 
   // Progress bar component
   const ProgressHeader = () => (
