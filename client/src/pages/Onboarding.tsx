@@ -1616,6 +1616,16 @@ function OnboardingContent() {
       ? data.highlights.map(h => typeof h === 'string' ? h : String(h || '')).filter(h => h !== '')
       : [];
     
+    // Use local state for license inputs to prevent focus loss on re-render
+    const [localLicenseNumber, setLocalLicenseNumber] = React.useState(data.licenseNumber || '');
+    const [localLicenseState, setLocalLicenseState] = React.useState(data.licenseState || '');
+    
+    // Sync local state with data when it changes externally
+    React.useEffect(() => {
+      setLocalLicenseNumber(data.licenseNumber || '');
+      setLocalLicenseState(data.licenseState || '');
+    }, [data.licenseNumber, data.licenseState]);
+    
     return (
       <div className="space-y-6">
         <div className="text-center mb-8">
@@ -1671,8 +1681,9 @@ function OnboardingContent() {
               <Label style={{ color: COLORS.textMuted }}>License Number</Label>
               <Input
                 placeholder="ABC123456"
-                value={data.licenseNumber}
-                onChange={(e) => updateData({ licenseNumber: e.target.value })}
+                value={localLicenseNumber}
+                onChange={(e) => setLocalLicenseNumber(e.target.value)}
+                onBlur={() => updateData({ licenseNumber: localLicenseNumber })}
                 style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
               />
             </div>
@@ -1680,8 +1691,9 @@ function OnboardingContent() {
               <Label style={{ color: COLORS.textMuted }}>State</Label>
               <Input
                 placeholder="FL"
-                value={data.licenseState}
-                onChange={(e) => updateData({ licenseState: e.target.value })}
+                value={localLicenseState}
+                onChange={(e) => setLocalLicenseState(e.target.value)}
+                onBlur={() => updateData({ licenseState: localLicenseState })}
                 style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
               />
             </div>
@@ -1694,9 +1706,15 @@ function OnboardingContent() {
 
   // Step 9: Bio & Description
   const Step10Bio = () => {
-    // Ensure strings are always valid
-    const shortBio = data.shortBio || '';
-    const fullDescription = data.fullDescription || '';
+    // Use local state for bio inputs to prevent focus loss on re-render
+    const [localShortBio, setLocalShortBio] = React.useState(data.shortBio || '');
+    const [localFullDescription, setLocalFullDescription] = React.useState(data.fullDescription || '');
+    
+    // Sync local state with data when it changes externally
+    React.useEffect(() => {
+      setLocalShortBio(data.shortBio || '');
+      setLocalFullDescription(data.fullDescription || '');
+    }, [data.shortBio, data.fullDescription]);
     
     return (
       <div className="space-y-6">
@@ -1717,14 +1735,15 @@ function OnboardingContent() {
             <Label style={{ color: COLORS.textMuted }}>Short Bio * (displayed in search results)</Label>
             <Textarea
               placeholder="Family-owned plumbing business serving Miami for 20+ years. Licensed, insured, and committed to quality."
-              value={shortBio}
-              onChange={(e) => updateData({ shortBio: e.target.value })}
+              value={localShortBio}
+              onChange={(e) => setLocalShortBio(e.target.value)}
+              onBlur={() => updateData({ shortBio: localShortBio })}
               rows={3}
               maxLength={200}
               style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
             />
             <p className="text-xs text-right" style={{ color: COLORS.textDim }}>
-              {shortBio.length}/200 characters
+              {localShortBio.length}/200 characters
             </p>
         </div>
 
@@ -1732,8 +1751,9 @@ function OnboardingContent() {
           <Label style={{ color: COLORS.textMuted }}>Full Description (displayed on your profile)</Label>
           <Textarea
             placeholder="Tell customers more about your business, your experience, what makes you different, and why they should choose you..."
-            value={fullDescription}
-            onChange={(e) => updateData({ fullDescription: e.target.value })}
+            value={localFullDescription}
+            onChange={(e) => setLocalFullDescription(e.target.value)}
+            onBlur={() => updateData({ fullDescription: localFullDescription })}
             rows={6}
             style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border, color: COLORS.text }}
           />
