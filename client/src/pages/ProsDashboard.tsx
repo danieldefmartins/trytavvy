@@ -9,7 +9,9 @@ import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { NotificationBadge } from "@/components/NotificationBadge";
 import { 
   User, 
-  Star, 
+  ThumbsUp,
+  Sparkles,
+  AlertTriangle,
   MessageSquare, 
   TrendingUp, 
   Calendar,
@@ -173,7 +175,10 @@ export default function ProsDashboard() {
                     <span className="text-2xl font-bold text-orange-600">{profileComplete}%</span>
                     <p className="text-xs text-gray-500">complete</p>
                   </div>
-                  <Button className="bg-orange-500 hover:bg-orange-600">
+                  <Button 
+                    className="bg-orange-500 hover:bg-orange-600"
+                    onClick={() => setLocation('/onboarding')}
+                  >
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Profile
                   </Button>
@@ -224,7 +229,7 @@ export default function ProsDashboard() {
         )}
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -280,24 +285,60 @@ export default function ProsDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Rating</p>
-                  <div className="flex items-center gap-1">
-                    <p className="text-3xl font-bold text-gray-900">{(profileStats.avgRating || 0).toFixed(1)}</p>
-                    <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                  </div>
-                </div>
-                <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                  <Star className="h-6 w-6 text-yellow-600" />
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">{profileStats.reviewCount} reviews</p>
-            </CardContent>
-          </Card>
         </div>
+
+        {/* Tavvy Review System - The Good, The Vibe, Heads Up */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Your Reputation</CardTitle>
+            <CardDescription>How customers describe their experience with you</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* The Good */}
+              <div className="text-center p-4 rounded-lg bg-blue-50">
+                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-3">
+                  <ThumbsUp className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="font-semibold text-blue-900 mb-1">The Good</h3>
+                <p className="text-sm text-blue-700 mb-3">What customers love</p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200">✨ Clean</Badge>
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200">😊 Friendly</Badge>
+                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200">⚡ Fast Service</Badge>
+                </div>
+                <p className="text-xs text-blue-600 mt-3">No reviews yet</p>
+              </div>
+
+              {/* The Vibe */}
+              <div className="text-center p-4 rounded-lg bg-gray-50">
+                <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center mx-auto mb-3">
+                  <Sparkles className="h-6 w-6 text-gray-600" />
+                </div>
+                <h3 className="font-semibold text-gray-900 mb-1">The Vibe</h3>
+                <p className="text-sm text-gray-600 mb-3">Your business personality</p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Badge className="bg-gray-200 text-gray-700 hover:bg-gray-300">💼 Professional</Badge>
+                  <Badge className="bg-gray-200 text-gray-700 hover:bg-gray-300">🛋️ Casual</Badge>
+                </div>
+                <p className="text-xs text-gray-500 mt-3">No reviews yet</p>
+              </div>
+
+              {/* Heads Up */}
+              <div className="text-center p-4 rounded-lg bg-orange-50">
+                <div className="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-3">
+                  <AlertTriangle className="h-6 w-6 text-orange-600" />
+                </div>
+                <h3 className="font-semibold text-orange-900 mb-1">Heads Up</h3>
+                <p className="text-sm text-orange-700 mb-3">Things to know</p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <span className="text-sm text-orange-600">Nothing reported</span>
+                </div>
+                <p className="text-xs text-orange-600 mt-3">Great job! 🎉</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -410,7 +451,11 @@ export default function ProsDashboard() {
                     <NotificationBadge count={leadStats.pending} size="sm" />
                   )}
                 </Button>
-                <Button className="w-full justify-start" variant="outline">
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => setLocation('/onboarding')}
+                >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Business Profile
                 </Button>
