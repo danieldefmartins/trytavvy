@@ -1219,23 +1219,27 @@ export default function OnboardingNew() {
   const Step7Services = () => {
     const [newService, setNewService] = useState({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
 
+    // Ensure services is always an array
+    const services = Array.isArray(data.services) ? data.services : [];
+    
     // Get suggested services from selected subcategories using V2 data structure
-    const category = getCategoriesForProviderType(data.providerType).find(c => c.name === data.primaryCategory);
-    const selectedSubs = category?.subcategories.filter(sub => data.selectedSubcategories.includes(sub.name)) || [];
+    const category = getCategoriesForProviderType(data.providerType || '').find(c => c.name === data.primaryCategory);
+    const selectedSubcats = Array.isArray(data.selectedSubcategories) ? data.selectedSubcategories : [];
+    const selectedSubs = category?.subcategories?.filter(sub => selectedSubcats.includes(sub.name)) || [];
     const suggestedServices = selectedSubs
-      .flatMap(sub => sub.services)
+      .flatMap(sub => sub.services || [])
       .filter((s, i, arr) => arr.indexOf(s) === i) // Remove duplicates
-      .filter(s => !data.services.some(svc => svc.name.toLowerCase() === s.toLowerCase())); // Remove already added
+      .filter(s => !services.some(svc => svc.name?.toLowerCase() === s.toLowerCase())); // Remove already added
 
     const addService = () => {
       if (newService.name.trim()) {
-        updateData({ services: [...data.services, newService] });
+        updateData({ services: [...services, newService] });
         setNewService({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
       }
     };
 
     const addSuggestedService = (serviceName: string) => {
-      updateData({ services: [...data.services, { name: serviceName, description: '', priceType: 'quote', priceMin: '', priceMax: '' }] });
+      updateData({ services: [...services, { name: serviceName, description: '', priceType: 'quote', priceMin: '', priceMax: '' }] });
     };
 
     return (
@@ -1253,7 +1257,7 @@ export default function OnboardingNew() {
         </div>
 
         {/* Suggested Services */}
-        {suggestedServices.length > 0 && data.services.length < 10 && (
+        {suggestedServices.length > 0 && services.length < 10 && (
           <div className="space-y-3">
             <Label style={{ color: COLORS.textMuted }}>Quick Add from {data.primaryCategory}</Label>
             <div className="flex flex-wrap gap-2">
@@ -1277,9 +1281,9 @@ export default function OnboardingNew() {
         )}
 
         {/* Existing Services */}
-        {data.services.length > 0 && (
+        {services.length > 0 && (
           <div className="space-y-3">
-            {data.services.map((service, idx) => (
+            {services.map((service, idx) => (
               <div
                 key={idx}
                 className="p-4 rounded-xl flex items-center justify-between"
@@ -1297,7 +1301,7 @@ export default function OnboardingNew() {
                   </p>
                 </div>
                 <button
-                  onClick={() => updateData({ services: data.services.filter((_, i) => i !== idx) })}
+                  onClick={() => updateData({ services: services.filter((_, i) => i !== idx) })}
                   style={{ color: COLORS.red }}
                 >
                   <X className="h-5 w-5" />
@@ -1367,9 +1371,9 @@ export default function OnboardingNew() {
           </Button>
         </div>
 
-        {data.services.length < 3 && (
+        {services.length < 3 && (
           <p className="text-sm text-center" style={{ color: COLORS.gold }}>
-            Add {3 - data.services.length} more service{3 - data.services.length > 1 ? 's' : ''} to improve your profile
+            Add {3 - services.length} more service{3 - services.length > 1 ? 's' : ''} to improve your profile
           </p>
         )}
       </div>
