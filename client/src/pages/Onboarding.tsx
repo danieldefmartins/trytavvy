@@ -1557,6 +1557,90 @@ function OnboardingContent() {
   const Step8Photos = () => {
     // Ensure workPhotos is always an array
     const workPhotos = Array.isArray(data.workPhotos) ? data.workPhotos : [];
+    const [uploading, setUploading] = React.useState<string | null>(null);
+    const [uploadError, setUploadError] = React.useState<string | null>(null);
+    
+    const profileInputRef = React.useRef<HTMLInputElement>(null);
+    const coverInputRef = React.useRef<HTMLInputElement>(null);
+    const workInputRefs = [React.useRef<HTMLInputElement>(null), React.useRef<HTMLInputElement>(null), React.useRef<HTMLInputElement>(null)];
+    
+    const uploadPhoto = async (file: File, type: 'profile' | 'cover' | 'work', workIndex?: number) => {
+      if (!user) {
+        setUploadError('Please sign in to upload photos');
+        return;
+      }
+      
+      setUploading(type === 'work' ? `work-${workIndex}` : type);
+      setUploadError(null);
+      
+      try {
+        // Create unique file path
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${type}${workIndex !== undefined ? `-${workIndex}` : ''}-${Date.now()}.${fileExt}`;
+        
+        // Upload to Supabase storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('pro-photos')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: true
+          });
+        
+        if (uploadError) throw uploadError;
+        
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('pro-photos')
+          .getPublicUrl(fileName);
+        
+        const publicUrl = urlData.publicUrl;
+        
+        // Update data based on type
+        if (type === 'profile') {
+          updateData({ profilePhoto: publicUrl });
+        } else if (type === 'cover') {
+          updateData({ coverPhoto: publicUrl });
+        } else if (type === 'work' && workIndex !== undefined) {
+          const newWorkPhotos = [...workPhotos];
+          newWorkPhotos[workIndex] = publicUrl;
+          updateData({ workPhotos: newWorkPhotos });
+        }
+      } catch (err: any) {
+        console.error('Upload error:', err);
+        setUploadError(err.message || 'Failed to upload photo');
+      } finally {
+        setUploading(null);
+      }
+    };
+    
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'profile' | 'cover' | 'work', workIndex?: number) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+          setUploadError('File size must be less than 10MB');
+          return;
+        }
+        // Validate file type
+        if (!['image/jpeg', 'image/png', 'image/webp', 'image/heic'].includes(file.type)) {
+          setUploadError('Please upload a JPEG, PNG, or WebP image');
+          return;
+        }
+        uploadPhoto(file, type, workIndex);
+      }
+    };
+    
+    const removePhoto = (type: 'profile' | 'cover' | 'work', workIndex?: number) => {
+      if (type === 'profile') {
+        updateData({ profilePhoto: null });
+      } else if (type === 'cover') {
+        updateData({ coverPhoto: null });
+      } else if (type === 'work' && workIndex !== undefined) {
+        const newWorkPhotos = [...workPhotos];
+        newWorkPhotos[workIndex] = '';
+        updateData({ workPhotos: newWorkPhotos.filter(p => p) });
+      }
+    };
     
     return (
       <div className="space-y-6">
@@ -1571,16 +1655,41 @@ function OnboardingContent() {
           Profiles with photos get 3x more views
         </p>
       </div>
+      
+      {uploadError && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{uploadError}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Profile Photo */}
       <div className="space-y-3">
         <Label style={{ color: COLORS.textMuted }}>Profile Photo</Label>
+        <input
+          type="file"
+          ref={profileInputRef}
+          className="hidden"
+          accept="image/jpeg,image/png,image/webp,image/heic"
+          onChange={(e) => handleFileChange(e, 'profile')}
+        />
         <div
-          className="w-32 h-32 rounded-full mx-auto flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+          className="w-32 h-32 rounded-full mx-auto flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
           style={{ backgroundColor: COLORS.backgroundCard, border: `2px dashed ${COLORS.border}` }}
+          onClick={() => !data.profilePhoto && profileInputRef.current?.click()}
         >
-          {data.profilePhoto ? (
-            <img src={data.profilePhoto} alt="Profile" className="w-full h-full rounded-full object-cover" />
+          {uploading === 'profile' ? (
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: COLORS.gold }} />
+          ) : data.profilePhoto ? (
+            <>
+              <img src={data.profilePhoto} alt="Profile" className="w-full h-full rounded-full object-cover" />
+              <button
+                onClick={(e) => { e.stopPropagation(); removePhoto('profile'); }}
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </>
           ) : (
             <div className="text-center">
               <User className="h-8 w-8 mx-auto mb-1" style={{ color: COLORS.textDim }} />
@@ -1593,12 +1702,30 @@ function OnboardingContent() {
       {/* Cover Photo */}
       <div className="space-y-3">
         <Label style={{ color: COLORS.textMuted }}>Cover Photo</Label>
+        <input
+          type="file"
+          ref={coverInputRef}
+          className="hidden"
+          accept="image/jpeg,image/png,image/webp,image/heic"
+          onChange={(e) => handleFileChange(e, 'cover')}
+        />
         <div
-          className="h-40 rounded-xl flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
+          className="h-40 rounded-xl flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
           style={{ backgroundColor: COLORS.backgroundCard, border: `2px dashed ${COLORS.border}` }}
+          onClick={() => !data.coverPhoto && coverInputRef.current?.click()}
         >
-          {data.coverPhoto ? (
-            <img src={data.coverPhoto} alt="Cover" className="w-full h-full rounded-xl object-cover" />
+          {uploading === 'cover' ? (
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: COLORS.gold }} />
+          ) : data.coverPhoto ? (
+            <>
+              <img src={data.coverPhoto} alt="Cover" className="w-full h-full rounded-xl object-cover" />
+              <button
+                onClick={(e) => { e.stopPropagation(); removePhoto('cover'); }}
+                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </>
           ) : (
             <div className="text-center">
               <ImageIcon className="h-8 w-8 mx-auto mb-2" style={{ color: COLORS.textDim }} />
@@ -1613,21 +1740,40 @@ function OnboardingContent() {
         <Label style={{ color: COLORS.textMuted }}>Work Photos (Before/After, Portfolio)</Label>
         <div className="grid grid-cols-3 gap-3">
           {[0, 1, 2].map((idx) => (
-            <div
-              key={idx}
-              className="aspect-square rounded-xl flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-              style={{ backgroundColor: COLORS.backgroundCard, border: `2px dashed ${COLORS.border}` }}
-            >
-              {workPhotos[idx] ? (
-                <img src={workPhotos[idx]} alt={`Work ${idx + 1}`} className="w-full h-full rounded-xl object-cover" />
-              ) : (
-                <Plus className="h-6 w-6" style={{ color: COLORS.textDim }} />
-              )}
+            <div key={idx}>
+              <input
+                type="file"
+                ref={workInputRefs[idx]}
+                className="hidden"
+                accept="image/jpeg,image/png,image/webp,image/heic"
+                onChange={(e) => handleFileChange(e, 'work', idx)}
+              />
+              <div
+                className="aspect-square rounded-xl flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity relative"
+                style={{ backgroundColor: COLORS.backgroundCard, border: `2px dashed ${COLORS.border}` }}
+                onClick={() => !workPhotos[idx] && workInputRefs[idx].current?.click()}
+              >
+                {uploading === `work-${idx}` ? (
+                  <Loader2 className="h-6 w-6 animate-spin" style={{ color: COLORS.gold }} />
+                ) : workPhotos[idx] ? (
+                  <>
+                    <img src={workPhotos[idx]} alt={`Work ${idx + 1}`} className="w-full h-full rounded-xl object-cover" />
+                    <button
+                      onClick={(e) => { e.stopPropagation(); removePhoto('work', idx); }}
+                      className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </>
+                ) : (
+                  <Plus className="h-6 w-6" style={{ color: COLORS.textDim }} />
+                )}
+              </div>
             </div>
           ))}
         </div>
         <p className="text-sm text-center" style={{ color: COLORS.textDim }}>
-          Click to upload photos (feature coming soon)
+          Click to upload photos of your work
         </p>
       </div>
     </div>
