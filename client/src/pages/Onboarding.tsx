@@ -41,7 +41,7 @@ import {
 } from "lucide-react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/lib/supabase";
-import { SERVICE_CATEGORIES as CATEGORIES_DATA, searchCategories, getFeaturedCategories, ServiceCategory } from "@/data/serviceCategories";
+import { SERVICE_CATEGORIES_V2 as CATEGORIES_DATA, searchCategoriesV2 as searchCategories, FEATURED_CATEGORIES_V2 as FEATURED_CATEGORIES, getCategoriesForProviderType, getSubcategoriesForCategory, getServicesForSubcategory, Category, Subcategory } from "@/data/serviceCategoriesV2";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 // Brand colors matching the existing theme
@@ -146,11 +146,13 @@ interface OnboardingData {
   // Step 1: Provider Type
   providerType: string;
   
-  // Step 2: Categories
+  // Step 2: Category
   primaryCategory: string;
-  secondaryCategories: string[];
   
-  // Step 3: Business Info
+  // Step 3: Subcategories
+  selectedSubcategories: string[];
+  
+  // Step 4: Business Info
   businessName: string;
   phone: string;
   email: string;
@@ -192,13 +194,13 @@ interface OnboardingData {
   currentStep: number;
 }
 
-const TOTAL_STEPS = 10;
+const TOTAL_STEPS = 11;
 
 // Initial state
 const initialData: OnboardingData = {
   providerType: '',
   primaryCategory: '',
-  secondaryCategories: [],
+  selectedSubcategories: [],
   businessName: '',
   phone: '',
   email: '',
@@ -314,14 +316,15 @@ export default function OnboardingNew() {
     switch (data.currentStep) {
       case 1: return !!data.providerType;
       case 2: return !!data.primaryCategory;
-      case 3: return !!data.businessName && !!data.phone;
-      case 4: return data.locationType === 'mobile' ? data.serviceAreas.length > 0 : (!!data.city && !!data.state && !!data.zipCode);
-      case 5: return true; // Hours are optional
-      case 6: return data.services.length > 0;
-      case 7: return true; // Photos are optional but encouraged
-      case 8: return true; // Highlights are optional
-      case 9: return !!data.shortBio;
-      case 10: return true; // Review step
+      case 3: return data.selectedSubcategories.length > 0; // Subcategories
+      case 4: return !!data.businessName && !!data.phone; // Business Info
+      case 5: return data.locationType === 'mobile' ? data.serviceAreas.length > 0 : (!!data.city && !!data.state && !!data.zipCode); // Location
+      case 6: return true; // Hours are optional
+      case 7: return data.services.length > 0; // Services
+      case 8: return true; // Photos are optional but encouraged
+      case 9: return true; // Highlights are optional
+      case 10: return !!data.shortBio; // Bio
+      case 11: return true; // Review step
       default: return false;
     }
   };
@@ -504,7 +507,7 @@ export default function OnboardingNew() {
           return (
             <button
               key={type.id}
-              onClick={() => updateData({ providerType: type.id, primaryCategory: '', secondaryCategories: [] })}
+              onClick={() => updateData({ providerType: type.id, primaryCategory: '', selectedSubcategories: [] })}
               className={`p-6 rounded-2xl border-2 transition-all text-left flex items-center gap-4 ${
                 isSelected ? 'scale-[1.02]' : 'hover:scale-[1.01]'
               }`}
@@ -548,7 +551,7 @@ export default function OnboardingNew() {
     const handleCategorySelect = (catName: string) => {
       updateData({ 
         primaryCategory: catName,
-        secondaryCategories: data.secondaryCategories.filter(c => c !== catName)
+        selectedSubcategories: [] // Reset subcategories when category changes
       });
       setCategorySearch('');
     };
@@ -557,10 +560,10 @@ export default function OnboardingNew() {
       <div className="space-y-6">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
-            What services do you offer?
+            What type of services do you offer?
           </h1>
           <p style={{ color: COLORS.textMuted }}>
-            Select your primary category and up to 3 secondary categories
+            Select your main service category
           </p>
         </div>
 
@@ -678,7 +681,7 @@ export default function OnboardingNew() {
                 </span>
               </div>
               <button
-                onClick={() => updateData({ primaryCategory: '', secondaryCategories: [] })}
+                onClick={() => updateData({ primaryCategory: '', selectedSubcategories: [] })}
                 className="text-sm" style={{ color: COLORS.textMuted }}
               >
                 Change
@@ -687,83 +690,115 @@ export default function OnboardingNew() {
           </div>
         )}
 
-        {/* Secondary Categories */}
-        {data.primaryCategory && (
-          <div className="space-y-4 mt-6">
-            <Label style={{ color: COLORS.textMuted }}>
-              Secondary Categories (optional, up to 3)
-            </Label>
-            <div className="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto">
-              {allCategories
-                .filter(cat => cat.name !== data.primaryCategory)
-                .map((cat) => {
-                  const isSelected = data.secondaryCategories.includes(cat.name);
-                  const canSelect = data.secondaryCategories.length < 3 || isSelected;
-                  
-                  return (
-                    <button
-                      key={cat.name}
-                      onClick={() => {
-                        if (isSelected) {
-                          updateData({ 
-                            secondaryCategories: data.secondaryCategories.filter(c => c !== cat.name)
-                          });
-                        } else if (canSelect) {
-                          updateData({ 
-                            secondaryCategories: [...data.secondaryCategories, cat.name]
-                          });
-                        }
-                      }}
-                      disabled={!canSelect}
-                      className={`p-3 rounded-xl border transition-all text-left ${
-                        !canSelect ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.01]'
-                      }`}
-                      style={{
-                        backgroundColor: isSelected ? `${COLORS.gold}15` : COLORS.backgroundCard,
-                        borderColor: isSelected ? COLORS.gold : COLORS.border,
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">{cat.icon}</span>
-                        <span className="font-medium text-sm truncate" style={{ color: COLORS.text }}>
-                          {cat.name}
-                        </span>
-                        {isSelected && (
-                          <CheckCircle className="h-4 w-4 ml-auto flex-shrink-0" style={{ color: COLORS.gold }} />
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-            </div>
-            
-            {/* Selected secondary categories summary */}
-            {data.secondaryCategories.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {data.secondaryCategories.map(cat => (
-                  <Badge 
-                    key={cat}
-                    variant="secondary"
-                    className="flex items-center gap-1 cursor-pointer"
-                    style={{ backgroundColor: `${COLORS.gold}20`, color: COLORS.gold }}
-                    onClick={() => updateData({ 
-                      secondaryCategories: data.secondaryCategories.filter(c => c !== cat)
-                    })}
-                  >
-                    {cat}
-                    <X className="h-3 w-3" />
-                  </Badge>
-                ))}
-              </div>
-            )}
+      </div>
+    );
+  };
+
+  // Step 3: Subcategory Selection
+  const Step3Subcategories = () => {
+    const category = getCategoriesForProviderType(data.providerType).find(c => c.name === data.primaryCategory);
+    const subcategories = category?.subcategories || [];
+    
+    const toggleSubcategory = (subName: string) => {
+      if (data.selectedSubcategories.includes(subName)) {
+        updateData({ 
+          selectedSubcategories: data.selectedSubcategories.filter(s => s !== subName)
+        });
+      } else {
+        updateData({ 
+          selectedSubcategories: [...data.selectedSubcategories, subName]
+        });
+      }
+    };
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.gold}20` }}>
+            <Briefcase className="h-8 w-8" style={{ color: COLORS.gold }} />
+          </div>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
+            What {data.primaryCategory} services do you offer?
+          </h1>
+          <p style={{ color: COLORS.textMuted }}>
+            Select all the service areas that apply to your business
+          </p>
+        </div>
+
+        {/* Selected Category Badge */}
+        <div className="p-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: `${COLORS.teal}10`, border: `1px solid ${COLORS.teal}40` }}>
+          <span className="text-2xl">{category?.icon}</span>
+          <span style={{ color: COLORS.text }}>
+            <strong>{data.primaryCategory}</strong>
+          </span>
+        </div>
+
+        {/* Subcategories Grid */}
+        <div className="space-y-4">
+          <Label style={{ color: COLORS.textMuted }}>
+            Select your service areas ({data.selectedSubcategories.length} selected)
+          </Label>
+          <div className="grid gap-3 max-h-[400px] overflow-y-auto">
+            {subcategories.map((sub) => {
+              const isSelected = data.selectedSubcategories.includes(sub.name);
+              
+              return (
+                <button
+                  key={sub.name}
+                  onClick={() => toggleSubcategory(sub.name)}
+                  className={`p-4 rounded-xl border transition-all text-left ${
+                    isSelected ? 'scale-[1.01]' : 'hover:scale-[1.01]'
+                  }`}
+                  style={{
+                    backgroundColor: isSelected ? `${COLORS.gold}15` : COLORS.backgroundCard,
+                    borderColor: isSelected ? COLORS.gold : COLORS.border,
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">{sub.icon}</span>
+                    <div className="flex-1">
+                      <span className="font-medium block" style={{ color: COLORS.text }}>
+                        {sub.name}
+                      </span>
+                      <span className="text-xs" style={{ color: COLORS.textDim }}>
+                        {sub.services.length} services available
+                      </span>
+                    </div>
+                    {isSelected ? (
+                      <CheckCircle className="h-5 w-5 flex-shrink-0" style={{ color: COLORS.gold }} />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full border-2 flex-shrink-0" style={{ borderColor: COLORS.border }} />
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Selected Subcategories Summary */}
+        {data.selectedSubcategories.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-4">
+            {data.selectedSubcategories.map(sub => (
+              <Badge 
+                key={sub}
+                variant="secondary"
+                className="flex items-center gap-1 cursor-pointer"
+                style={{ backgroundColor: `${COLORS.gold}20`, color: COLORS.gold }}
+                onClick={() => toggleSubcategory(sub)}
+              >
+                {sub}
+                <X className="h-3 w-3" />
+              </Badge>
+            ))}
           </div>
         )}
       </div>
     );
   };
 
-  // Step 3: Business Info
-  const Step3BusinessInfo = () => (
+  // Step 4: Business Info
+  const Step4BusinessInfo = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.teal}20` }}>
@@ -868,7 +903,7 @@ export default function OnboardingNew() {
   );
 
   // Step 4: Location & Service Area
-  const Step4Location = () => (
+  const Step5Location = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.green}20` }}>
@@ -999,7 +1034,7 @@ export default function OnboardingNew() {
   );
 
   // Step 5: Hours of Operation
-  const Step5Hours = () => (
+  const Step6Hours = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.gold}20` }}>
@@ -1069,18 +1104,16 @@ export default function OnboardingNew() {
   );
 
   // Step 6: Services
-  const Step6Services = () => {
+  const Step7Services = () => {
     const [newService, setNewService] = useState({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
 
-    // Get suggested services from selected category subcategories
-    const allCategories = CATEGORIES_DATA[data.providerType as keyof typeof CATEGORIES_DATA] || [];
-    const primaryCat = allCategories.find(c => c.name === data.primaryCategory);
-    const secondaryCats = allCategories.filter(c => data.secondaryCategories.includes(c.name));
-    const suggestedServices = [
-      ...(primaryCat?.subcategories || []),
-      ...secondaryCats.flatMap(c => c.subcategories)
-    ].filter((s, i, arr) => arr.indexOf(s) === i) // Remove duplicates
-     .filter(s => !data.services.some(svc => svc.name.toLowerCase() === s.toLowerCase())); // Remove already added
+    // Get suggested services from selected subcategories using V2 data structure
+    const category = getCategoriesForProviderType(data.providerType).find(c => c.name === data.primaryCategory);
+    const selectedSubs = category?.subcategories.filter(sub => data.selectedSubcategories.includes(sub.name)) || [];
+    const suggestedServices = selectedSubs
+      .flatMap(sub => sub.services)
+      .filter((s, i, arr) => arr.indexOf(s) === i) // Remove duplicates
+      .filter(s => !data.services.some(svc => svc.name.toLowerCase() === s.toLowerCase())); // Remove already added
 
     const addService = () => {
       if (newService.name.trim()) {
@@ -1232,7 +1265,7 @@ export default function OnboardingNew() {
   };
 
   // Step 7: Photos & Media
-  const Step7Photos = () => (
+  const Step8Photos = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.gold}20` }}>
@@ -1308,7 +1341,7 @@ export default function OnboardingNew() {
   );
 
   // Step 8: Business Highlights
-  const Step8Highlights = () => (
+  const Step9Highlights = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.green}20` }}>
@@ -1384,7 +1417,7 @@ export default function OnboardingNew() {
   );
 
   // Step 9: Bio & Description
-  const Step9Bio = () => (
+  const Step10Bio = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.teal}20` }}>
@@ -1429,7 +1462,7 @@ export default function OnboardingNew() {
   );
 
   // Step 10: Review & Complete
-  const Step10Review = () => {
+  const Step11Review = () => {
     const getMissingItems = () => {
       const missing = [];
       if (!data.profilePhoto) missing.push({ item: 'Profile Photo', impact: 'high', tip: 'Profiles with photos get 3x more views' });
@@ -1528,14 +1561,15 @@ export default function OnboardingNew() {
       switch (data.currentStep) {
         case 1: return Step1ProviderType();
         case 2: return Step2Categories();
-        case 3: return Step3BusinessInfo();
-        case 4: return Step4Location();
-        case 5: return Step5Hours();
-        case 6: return Step6Services();
-        case 7: return Step7Photos();
-        case 8: return Step8Highlights();
-        case 9: return Step9Bio();
-        case 10: return Step10Review();
+        case 3: return Step3Subcategories();
+        case 4: return Step4BusinessInfo();
+        case 5: return Step5Location();
+        case 6: return Step6Hours();
+        case 7: return Step7Services();
+        case 8: return Step8Photos();
+        case 9: return Step9Highlights();
+        case 10: return Step10Bio();
+        case 11: return Step11Review();
         default: return null;
       }
     })();
