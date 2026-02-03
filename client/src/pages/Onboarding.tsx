@@ -213,6 +213,9 @@ interface OnboardingData {
   
   // Meta
   currentStep: number;
+  
+  // Claimed Place (if claiming existing business)
+  claimedPlaceId: string | null;
 }
 
 const TOTAL_STEPS = 11;
@@ -250,6 +253,7 @@ const initialData: OnboardingData = {
   shortBio: '',
   fullDescription: '',
   currentStep: 1,
+  claimedPlaceId: null,
 };
 
 // Profile completion weights
@@ -952,9 +956,81 @@ function OnboardingContent() {
 
   // Step 4: Business Info
   const Step4BusinessInfo = () => {
+    const [localBusinessName, setLocalBusinessName] = React.useState(data.businessName || '');
+    const [searchResults, setSearchResults] = React.useState<Array<{id: string; name: string; city: string; region: string; tavvy_category: string; is_pro: boolean}>>([]);
+    const [isSearching, setIsSearching] = React.useState(false);
+    const [showResults, setShowResults] = React.useState(false);
+    const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+    
     const businessNameError = data.businessName && !isValidBusinessName(data.businessName);
     const phoneError = data.phone && !isValidPhone(data.phone);
     const emailError = data.email && !isValidEmail(data.email);
+    
+    // Search for existing businesses when name changes
+    const searchBusinesses = async (name: string) => {
+      if (name.length < 3) {
+        setSearchResults([]);
+        setShowResults(false);
+        return;
+      }
+      
+      setIsSearching(true);
+      try {
+        const { data: places, error } = await supabase
+          .from('places')
+          .select('id, name, city, region, tavvy_category, is_pro')
+          .ilike('name', `%${name}%`)
+          .limit(5);
+        
+        if (!error && places && places.length > 0) {
+          setSearchResults(places);
+          setShowResults(true);
+        } else {
+          setSearchResults([]);
+          setShowResults(false);
+        }
+      } catch (err) {
+        console.error('Error searching businesses:', err);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+    
+    // Handle business name change with debounce
+    const handleBusinessNameChange = (value: string) => {
+      setLocalBusinessName(value);
+      
+      // Clear previous timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      // Debounce search
+      searchTimeoutRef.current = setTimeout(() => {
+        searchBusinesses(value);
+      }, 500);
+    };
+    
+    // Handle claiming an existing business
+    const handleClaimBusiness = async (place: {id: string; name: string; city: string; region: string; tavvy_category: string}) => {
+      // Pre-fill data from the claimed place
+      updateData({
+        businessName: place.name,
+        claimedPlaceId: place.id,
+        city: place.city || '',
+        state: place.region || '',
+        primaryCategory: place.tavvy_category || data.primaryCategory,
+      });
+      setLocalBusinessName(place.name);
+      setShowResults(false);
+      setSearchResults([]);
+    };
+    
+    // Sync local state with data
+    React.useEffect(() => {
+      setLocalBusinessName(data.businessName || '');
+    }, [data.businessName]);
     
     return (
       <div className="space-y-6">
@@ -971,20 +1047,98 @@ function OnboardingContent() {
         </div>
 
         <div className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
             <Label htmlFor="businessName" style={{ color: COLORS.textMuted }}>Business Name *</Label>
-            <input
-              id="businessName"
-              className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
-              placeholder="ABC Plumbing Services"
-              defaultValue={data.businessName}
-              onBlur={(e) => updateData({ businessName: e.target.value })}
-              style={{ 
-                backgroundColor: COLORS.backgroundCard,
-                borderColor: businessNameError ? COLORS.red : COLORS.border,
-                color: COLORS.text
-              }}
-            />
+            <div className="relative">
+              <input
+                id="businessName"
+                className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+                placeholder="ABC Plumbing Services"
+                value={localBusinessName}
+                onChange={(e) => handleBusinessNameChange(e.target.value)}
+                onBlur={(e) => {
+                  updateData({ businessName: e.target.value });
+                  // Delay hiding results to allow click
+                  setTimeout(() => setShowResults(false), 200);
+                }}
+                onFocus={() => searchResults.length > 0 && setShowResults(true)}
+                style={{ 
+                  backgroundColor: COLORS.backgroundCard,
+                  borderColor: businessNameError ? COLORS.red : data.claimedPlaceId ? COLORS.green : COLORS.border,
+                  color: COLORS.text
+                }}
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin" style={{ color: COLORS.teal }} />
+                </div>
+              )}
+            </div>
+            
+            {/* Claimed business indicator */}
+            {data.claimedPlaceId && (
+              <div className="flex items-center gap-2 p-2 rounded-lg" style={{ backgroundColor: `${COLORS.green}15` }}>
+                <CheckCircle className="h-4 w-4" style={{ color: COLORS.green }} />
+                <span className="text-sm" style={{ color: COLORS.green }}>Claiming existing business listing</span>
+                <button
+                  type="button"
+                  onClick={() => updateData({ claimedPlaceId: null })}
+                  className="ml-auto text-xs underline"
+                  style={{ color: COLORS.textMuted }}
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+            
+            {/* Search results dropdown */}
+            {showResults && searchResults.length > 0 && !data.claimedPlaceId && (
+              <div 
+                className="absolute z-50 w-full mt-1 rounded-lg border shadow-lg overflow-hidden"
+                style={{ backgroundColor: COLORS.backgroundCard, borderColor: COLORS.border }}
+              >
+                <div className="p-2 border-b" style={{ borderColor: COLORS.border, backgroundColor: `${COLORS.teal}10` }}>
+                  <p className="text-xs font-medium" style={{ color: COLORS.teal }}>
+                    🔍 Found existing businesses - Is this yours?
+                  </p>
+                </div>
+                {searchResults.map((place) => (
+                  <button
+                    key={place.id}
+                    type="button"
+                    className="w-full p-3 text-left hover:opacity-80 transition-opacity border-b last:border-b-0"
+                    style={{ borderColor: COLORS.border }}
+                    onClick={() => handleClaimBusiness(place)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium" style={{ color: COLORS.text }}>{place.name}</p>
+                        <p className="text-xs" style={{ color: COLORS.textMuted }}>
+                          {[place.city, place.region].filter(Boolean).join(', ')}
+                          {place.tavvy_category && ` • ${place.tavvy_category}`}
+                        </p>
+                      </div>
+                      {place.is_pro ? (
+                        <Badge className="text-xs" style={{ backgroundColor: COLORS.orange, color: 'white' }}>Already Claimed</Badge>
+                      ) : (
+                        <Badge className="text-xs" style={{ backgroundColor: COLORS.green, color: 'white' }}>Claim This</Badge>
+                      )}
+                    </div>
+                  </button>
+                ))}
+                <div className="p-2 border-t" style={{ borderColor: COLORS.border }}>
+                  <button
+                    type="button"
+                    className="w-full text-center text-xs py-1"
+                    style={{ color: COLORS.textMuted }}
+                    onClick={() => setShowResults(false)}
+                  >
+                    None of these? Continue with new business
+                  </button>
+                </div>
+              </div>
+            )}
+            
             {businessNameError && (
               <p className="text-xs" style={{ color: COLORS.red }}>Please enter a valid business name (at least 2 characters with letters)</p>
             )}
