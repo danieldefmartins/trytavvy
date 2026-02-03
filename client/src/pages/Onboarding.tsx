@@ -1335,14 +1335,67 @@ function OnboardingContent() {
     );
   };
 
-  // Step 6: Services - MINIMAL TEST VERSION
+  // Step 6: Services
   const Step7Services = () => {
-    console.log('Step7Services - MINIMAL VERSION RENDERING');
+    const [newService, setNewService] = useState({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
+
+    // Ensure services is always an array with valid objects
+    const services = Array.isArray(data.services) 
+      ? data.services.map(s => {
+          if (typeof s === 'string') {
+            return { name: s, description: '', priceType: 'quote', priceMin: '', priceMax: '' };
+          }
+          if (s && typeof s === 'object') {
+            return {
+              name: String(s.name || ''),
+              description: String(s.description || ''),
+              priceType: String(s.priceType || 'quote'),
+              priceMin: String(s.priceMin || ''),
+              priceMax: String(s.priceMax || '')
+            };
+          }
+          return null;
+        }).filter((s): s is {name: string; description: string; priceType: string; priceMin: string; priceMax: string} => s !== null && s.name !== '')
+      : [];
     
-    // Return a simple static component with no state or complex logic
+    // Get suggested services from selected subcategories
+    let suggestedServices: string[] = [];
+    try {
+      const providerType = data.providerType || 'pro';
+      const categories = getCategoriesForProviderType(providerType);
+      const category = Array.isArray(categories) ? categories.find(c => c?.name === data.primaryCategory) : null;
+      const selectedSubcats = Array.isArray(data.selectedSubcategories) ? data.selectedSubcategories : [];
+      const subcategories = category?.subcategories;
+      const selectedSubs = Array.isArray(subcategories) 
+        ? subcategories.filter(sub => sub && selectedSubcats.includes(sub.name)) 
+        : [];
+      suggestedServices = selectedSubs
+        .flatMap(sub => Array.isArray(sub?.services) ? sub.services : [])
+        .filter((s): s is string => typeof s === 'string')
+        .filter((s, i, arr) => arr.indexOf(s) === i)
+        .filter(s => !services.some(svc => svc?.name?.toLowerCase() === s.toLowerCase()));
+    } catch (err) {
+      console.error('Error getting suggested services:', err);
+      suggestedServices = [];
+    }
+
+    const addService = () => {
+      if (newService.name.trim()) {
+        updateData({ services: [...services, newService] });
+        setNewService({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
+      }
+    };
+
+    const addSuggestedService = (serviceName: string) => {
+      updateData({ services: [...services, { name: serviceName, description: '', priceType: 'quote', priceMin: '', priceMax: '' }] });
+    };
+
     return (
       <div className="space-y-6">
         <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.teal}20` }}>
+            <Briefcase className="h-8 w-8" style={{ color: COLORS.teal }} />
+          </div>
           <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
             Services You Offer
           </h1>
@@ -1350,10 +1403,127 @@ function OnboardingContent() {
             Add at least 3 services to help customers find you
           </p>
         </div>
-        <div className="p-4 rounded-xl" style={{ backgroundColor: COLORS.backgroundCard }}>
-          <p style={{ color: COLORS.text }}>This is a minimal test version of Step 7.</p>
-          <p style={{ color: COLORS.textMuted }}>If you see this, the basic rendering works.</p>
+
+        {/* Suggested Services */}
+        {suggestedServices.length > 0 && services.length < 10 && (
+          <div className="space-y-3">
+            <Label style={{ color: COLORS.textMuted }}>Quick Add from your category</Label>
+            <div className="flex flex-wrap gap-2">
+              {suggestedServices.slice(0, 8).map((service, idx) => (
+                <button
+                  key={`suggested-${idx}`}
+                  onClick={() => addSuggestedService(String(service))}
+                  className="px-3 py-1.5 rounded-full text-sm flex items-center gap-1 transition-all hover:scale-105"
+                  style={{ 
+                    backgroundColor: `${COLORS.teal}15`,
+                    border: `1px solid ${COLORS.teal}40`,
+                    color: COLORS.teal
+                  }}
+                >
+                  <Plus className="h-3 w-3" />
+                  {String(service)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Existing Services */}
+        {services.length > 0 && (
+          <div className="space-y-3">
+            {services.map((service, idx) => (
+              <div
+                key={`service-${idx}`}
+                className="p-4 rounded-xl flex items-center justify-between"
+                style={{ backgroundColor: COLORS.backgroundCard }}
+              >
+                <div>
+                  <h4 className="font-medium" style={{ color: COLORS.text }}>{String(service.name || '')}</h4>
+                  {service.description && (
+                    <p className="text-sm" style={{ color: COLORS.textMuted }}>{String(service.description || '')}</p>
+                  )}
+                  <p className="text-sm" style={{ color: COLORS.teal }}>
+                    {String(service.priceType) === 'quote' ? 'Quote' : 
+                     String(service.priceType) === 'fixed' ? `$${String(service.priceMin || '')}` :
+                     `$${String(service.priceMin || '')} - $${String(service.priceMax || '')}`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => updateData({ services: services.filter((_, i) => i !== idx) })}
+                  style={{ color: COLORS.red }}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add New Service */}
+        <div className="p-4 rounded-xl space-y-4" style={{ backgroundColor: COLORS.backgroundCard, border: `1px dashed ${COLORS.border}` }}>
+          <Input
+            placeholder="Service name (e.g., Drain Cleaning)"
+            value={newService.name}
+            onChange={(e) => setNewService({ ...newService, name: e.target.value })}
+            style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
+          />
+          <Textarea
+            placeholder="Brief description (optional)"
+            value={newService.description}
+            onChange={(e) => setNewService({ ...newService, description: e.target.value })}
+            rows={2}
+            style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
+          />
+          <div className="flex gap-2">
+            <select
+              value={newService.priceType}
+              onChange={(e) => setNewService({ ...newService, priceType: e.target.value })}
+              className="px-3 py-2 rounded-md"
+              style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text, border: `1px solid ${COLORS.border}` }}
+            >
+              <option value="quote">Request Quote</option>
+              <option value="fixed">Fixed Price</option>
+              <option value="range">Price Range</option>
+            </select>
+            {newService.priceType !== 'quote' && (
+              <>
+                <Input
+                  type="number"
+                  placeholder={newService.priceType === 'fixed' ? 'Price' : 'Min'}
+                  value={newService.priceMin}
+                  onChange={(e) => setNewService({ ...newService, priceMin: e.target.value })}
+                  className="w-24"
+                  style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
+                />
+                {newService.priceType === 'range' && (
+                  <Input
+                    type="number"
+                    placeholder="Max"
+                    value={newService.priceMax}
+                    onChange={(e) => setNewService({ ...newService, priceMax: e.target.value })}
+                    className="w-24"
+                    style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
+                  />
+                )}
+              </>
+            )}
+          </div>
+          <Button
+            onClick={addService}
+            disabled={!newService.name.trim()}
+            className="w-full gap-2"
+            style={{ backgroundColor: COLORS.teal, color: 'black' }}
+          >
+            <Plus className="h-4 w-4" />
+            Add Service
+          </Button>
         </div>
+
+        {services.length < 3 && (
+          <p className="text-sm text-center" style={{ color: COLORS.gold }}>
+            Add {3 - services.length} more service{3 - services.length > 1 ? 's' : ''} to improve your profile
+          </p>
+        )}
       </div>
     );
   };
@@ -1676,39 +1846,21 @@ function OnboardingContent() {
 
   // Render step content - using key prop to maintain input focus
   const renderStep = () => {
-    // Wrap each step in try-catch to catch and display errors
-    try {
-      const stepContent = (() => {
-        switch (data.currentStep) {
-          case 1: return Step1ProviderType();
-          case 2: return Step2Categories();
-          case 3: return Step3Subcategories();
-          case 4: return Step4BusinessInfo();
-          case 5: return Step5Location();
-          case 6: return Step6Hours();
-          case 7: return Step7Services();
-          case 8: return Step8Photos();
-          case 9: return Step9Highlights();
-          case 10: return Step10Bio();
-          case 11: return Step11Review();
-          default: return null;
-        }
-      })();
-      
-      // Key is based on step number only, not on data values
-      return <div key={`step-${data.currentStep}`}>{stepContent}</div>;
-    } catch (err) {
-      console.error('Error rendering step:', data.currentStep, err);
-      return (
-        <div className="text-center p-8">
-          <AlertCircle className="h-12 w-12 mx-auto mb-4" style={{ color: COLORS.red }} />
-          <h2 className="text-xl font-bold mb-2" style={{ color: COLORS.text }}>Something went wrong</h2>
-          <p className="mb-4" style={{ color: COLORS.textMuted }}>Error on step {data.currentStep}: {String(err)}</p>
-          <Button onClick={() => setData(prev => ({ ...prev, currentStep: 1 }))} style={{ backgroundColor: COLORS.teal }}>
-            Start Over
-          </Button>
-        </div>
-      );
+    // Render step components as JSX elements (not function calls) to properly support hooks
+    // Key is based on step number to maintain component identity
+    switch (data.currentStep) {
+      case 1: return <Step1ProviderType key="step-1" />;
+      case 2: return <Step2Categories key="step-2" />;
+      case 3: return <Step3Subcategories key="step-3" />;
+      case 4: return <Step4BusinessInfo key="step-4" />;
+      case 5: return <Step5Location key="step-5" />;
+      case 6: return <Step6Hours key="step-6" />;
+      case 7: return <Step7Services key="step-7" />;
+      case 8: return <Step8Photos key="step-8" />;
+      case 9: return <Step9Highlights key="step-9" />;
+      case 10: return <Step10Bio key="step-10" />;
+      case 11: return <Step11Review key="step-11" />;
+      default: return null;
     }
   };
 
