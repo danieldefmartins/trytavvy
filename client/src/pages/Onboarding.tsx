@@ -299,101 +299,59 @@ function OnboardingContent() {
       }
 
       try {
-        // Load from pro_providers table
+        // FIRST: Check localStorage (primary source for progress)
+        const localProgress = localStorage.getItem(`onboarding_progress_${user.id}`);
+        if (localProgress) {
+          try {
+            const savedData = JSON.parse(localProgress);
+            console.log('Restoring from localStorage, step:', savedData.currentStep);
+            setData(prev => ({
+              ...prev,
+              ...savedData,
+            }));
+            setInitialLoading(false);
+            return;
+          } catch (parseErr) {
+            console.error('Error parsing localStorage:', parseErr);
+          }
+        }
+
+        // FALLBACK: Check database for partial data
         const { data: proData, error } = await supabase
           .from('pro_providers')
           .select('*')
           .eq('user_id', user.id)
           .single();
 
-        if (error) {
-          console.log('No existing pro_providers record found, starting fresh');
-          // Check localStorage backup
-          const backup = localStorage.getItem(`onboarding_backup_${user.id}`);
-          if (backup) {
-            try {
-              const backupData = JSON.parse(backup);
-              console.log('Restoring from localStorage backup');
-              setData(prev => ({
-                ...prev,
-                ...backupData,
-              }));
-            } catch (parseErr) {
-              console.error('Error parsing localStorage backup:', parseErr);
-            }
-          }
-          setInitialLoading(false);
-          return;
-        }
-
-        if (proData) {
-          console.log('Found existing pro_providers record, restoring...');
-          
-          // If we have onboarding_data JSONB, use that for full restoration
-          const savedData = proData.onboarding_data as OnboardingData | null;
-          
-          if (savedData && typeof savedData === 'object') {
-            // Full restoration from onboarding_data JSONB
-            setData(prev => ({
-              ...prev,
-              providerType: savedData.providerType || proData.provider_type || '',
-              primaryCategory: savedData.primaryCategory || proData.trade_category || '',
-              selectedSubcategories: savedData.selectedSubcategories || proData.specialties || [],
-              businessName: savedData.businessName || proData.business_name || '',
-              phone: savedData.phone || proData.phone || '',
-              email: savedData.email || proData.email || '',
-              website: savedData.website || proData.website || '',
-              yearEstablished: savedData.yearEstablished || '',
-              locationType: savedData.locationType || (proData.service_areas?.length > 0 ? 'mobile' : 'fixed'),
-              address: savedData.address || proData.address || '',
-              address2: savedData.address2 || '',
-              city: savedData.city || proData.city || '',
-              state: savedData.state || proData.state || '',
-              zipCode: savedData.zipCode || proData.zip_code || '',
-              serviceAreas: savedData.serviceAreas || proData.service_areas || [],
-              serviceRadius: savedData.serviceRadius || proData.service_radius || 25,
-              hours: savedData.hours || initialData.hours,
-              byAppointmentOnly: savedData.byAppointmentOnly || false,
-              services: savedData.services || [],
-              profilePhoto: savedData.profilePhoto || proData.profile_photo_url || null,
-              coverPhoto: savedData.coverPhoto || proData.cover_photo_url || null,
-              workPhotos: savedData.workPhotos || [],
-              highlights: savedData.highlights || [],
-              licenseNumber: savedData.licenseNumber || '',
-              licenseState: savedData.licenseState || '',
-              shortBio: savedData.shortBio || proData.bio || '',
-              fullDescription: savedData.fullDescription || proData.description || '',
-              currentStep: proData.onboarding_step || 1,
-            }));
-          } else {
-            // Partial restoration from individual columns
-            setData(prev => ({
-              ...prev,
-              providerType: proData.provider_type || '',
-              primaryCategory: proData.trade_category || '',
-              selectedSubcategories: proData.specialties || [],
-              businessName: proData.business_name || '',
-              phone: proData.phone || '',
-              email: proData.email || '',
-              website: proData.website || '',
-              locationType: proData.service_areas?.length > 0 ? 'mobile' : 'fixed',
-              address: proData.address || '',
-              city: proData.city || '',
-              state: proData.state || '',
-              zipCode: proData.zip_code || '',
-              serviceAreas: proData.service_areas || [],
-              serviceRadius: proData.service_radius || 25,
-              profilePhoto: proData.profile_photo_url || null,
-              coverPhoto: proData.cover_photo_url || null,
-              shortBio: proData.bio || '',
-              fullDescription: proData.description || '',
-              currentStep: proData.onboarding_step || 1,
-            }));
-          }
+        if (!error && proData) {
+          console.log('Found database record, restoring partial data...');
+          setData(prev => ({
+            ...prev,
+            providerType: proData.provider_type || '',
+            primaryCategory: proData.trade_category || '',
+            selectedSubcategories: proData.specialties || [],
+            businessName: proData.business_name || '',
+            phone: proData.phone || '',
+            email: proData.email || '',
+            website: proData.website || '',
+            locationType: proData.service_areas?.length > 0 ? 'mobile' : 'fixed',
+            address: proData.address || '',
+            city: proData.city || '',
+            state: proData.state || '',
+            zipCode: proData.zip_code || '',
+            serviceAreas: proData.service_areas || [],
+            serviceRadius: proData.service_radius || 25,
+            profilePhoto: proData.profile_photo_url || null,
+            coverPhoto: proData.cover_photo_url || null,
+            shortBio: proData.bio || '',
+            fullDescription: proData.description || '',
+            currentStep: 1, // Start from beginning if no localStorage
+          }));
+        } else {
+          console.log('No saved progress found, starting fresh');
         }
       } catch (err) {
         console.error('Error loading saved progress:', err);
-        // If no saved data, start fresh - this is not an error
       } finally {
         setInitialLoading(false);
       }
@@ -479,49 +437,30 @@ function OnboardingContent() {
     }
   };
 
-  // Save progress to database
+  // Save progress - localStorage as primary, database as backup
   const saveProgress = async () => {
     if (!user) return;
     
     setSaving(true);
+    
+    // ALWAYS save to localStorage first (reliable)
     try {
-      // Generate a slug from business name if not exists
+      localStorage.setItem(`onboarding_progress_${user.id}`, JSON.stringify({
+        ...data,
+        savedAt: new Date().toISOString()
+      }));
+      console.log('Progress saved to localStorage');
+    } catch (localErr) {
+      console.error('LocalStorage save failed:', localErr);
+    }
+    
+    // Then try to save to database (may fail if columns don't exist)
+    try {
       const slug = data.businessName 
         ? data.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + user.id.substring(0, 8)
         : 'pro-' + user.id.substring(0, 8);
 
-      // Store all onboarding data in a JSONB column for easy restoration
-      const onboardingData = {
-        providerType: data.providerType,
-        primaryCategory: data.primaryCategory,
-        selectedSubcategories: data.selectedSubcategories,
-        businessName: data.businessName,
-        phone: data.phone,
-        email: data.email,
-        website: data.website,
-        yearEstablished: data.yearEstablished,
-        locationType: data.locationType,
-        address: data.address,
-        address2: data.address2,
-        city: data.city,
-        state: data.state,
-        zipCode: data.zipCode,
-        serviceAreas: data.serviceAreas,
-        serviceRadius: data.serviceRadius,
-        hours: data.hours,
-        byAppointmentOnly: data.byAppointmentOnly,
-        services: data.services,
-        profilePhoto: data.profilePhoto,
-        coverPhoto: data.coverPhoto,
-        workPhotos: data.workPhotos,
-        highlights: data.highlights,
-        licenseNumber: data.licenseNumber,
-        licenseState: data.licenseState,
-        shortBio: data.shortBio,
-        fullDescription: data.fullDescription,
-      };
-
-      // Save to pro_providers table with the correct schema
+      // Only save columns that definitely exist in the database
       const proData = {
         user_id: user.id,
         business_name: data.businessName || 'My Business',
@@ -543,9 +482,6 @@ function OnboardingContent() {
         short_description: data.shortBio || null,
         profile_photo_url: data.profilePhoto || null,
         cover_photo_url: data.coverPhoto || null,
-        onboarding_step: data.currentStep,
-        onboarding_data: onboardingData,
-        onboarding_completed_at: data.currentStep === TOTAL_STEPS ? new Date().toISOString() : null,
         is_active: true,
         updated_at: new Date().toISOString(),
       };
@@ -555,24 +491,12 @@ function OnboardingContent() {
         .upsert(proData, { onConflict: 'user_id' });
 
       if (proError) {
-        console.error('Error saving to pro_providers:', proError);
-        throw proError;
+        console.error('Database save failed (non-critical):', proError);
+      } else {
+        console.log('Progress also saved to database');
       }
-
-      console.log('Progress saved successfully to pro_providers');
-
     } catch (err) {
-      console.error('Error saving progress:', err);
-      // Store in localStorage as backup
-      try {
-        localStorage.setItem(`onboarding_backup_${user.id}`, JSON.stringify({
-          ...data,
-          savedAt: new Date().toISOString()
-        }));
-        console.log('Progress saved to localStorage as backup');
-      } catch (localErr) {
-        console.error('LocalStorage backup also failed:', localErr);
-      }
+      console.error('Database save error (non-critical):', err);
     } finally {
       setSaving(false);
     }
@@ -792,7 +716,7 @@ function OnboardingContent() {
               <div className="flex items-center gap-3">
                 <CheckCircle className="h-5 w-5" style={{ color: COLORS.teal }} />
                 <span style={{ color: COLORS.text }}>
-                  <strong>Primary:</strong> {data.primaryCategory}
+                  <strong>Primary:</strong> {String(data.primaryCategory || '')}
                 </span>
               </div>
               <button
@@ -845,7 +769,7 @@ function OnboardingContent() {
         <div className="p-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: `${COLORS.teal}10`, border: `1px solid ${COLORS.teal}40` }}>
           <span className="text-2xl">{category?.icon}</span>
           <span style={{ color: COLORS.text }}>
-            <strong>{data.primaryCategory}</strong>
+            <strong>{String(data.primaryCategory || '')}</strong>
           </span>
         </div>
 
@@ -1395,7 +1319,7 @@ function OnboardingContent() {
         {/* Suggested Services */}
         {suggestedServices.length > 0 && services.length < 10 && (
           <div className="space-y-3">
-            <Label style={{ color: COLORS.textMuted }}>Quick Add from {data.primaryCategory}</Label>
+            <Label style={{ color: COLORS.textMuted }}>Quick Add from {String(data.primaryCategory || 'your category')}</Label>
             <div className="flex flex-wrap gap-2">
               {suggestedServices.slice(0, 8).map((service) => (
                 <button
@@ -1779,7 +1703,7 @@ function OnboardingContent() {
             </div>
             <div className="flex justify-between">
               <span style={{ color: COLORS.textMuted }}>Category</span>
-              <span style={{ color: COLORS.text }}>{data.primaryCategory || '-'}</span>
+              <span style={{ color: COLORS.text }}>{String(data.primaryCategory || '-')}</span>
             </div>
             <div className="flex justify-between">
               <span style={{ color: COLORS.textMuted }}>Location</span>
