@@ -248,6 +248,17 @@ const COMPLETION_WEIGHTS = {
   website: 5,
 };
 
+// Helper function to get featured categories for a provider type
+function getFeaturedCategories(providerType: string): Category[] {
+  const allCategories = getCategoriesForProviderType(providerType);
+  const featuredNames = FEATURED_CATEGORIES[providerType as keyof typeof FEATURED_CATEGORIES] || [];
+  
+  // Return categories that match the featured names, in order
+  return featuredNames
+    .map(name => allCategories.find(cat => cat.name === name))
+    .filter((cat): cat is Category => cat !== undefined);
+}
+
 export default function OnboardingNew() {
   const [, setLocation] = useLocation();
   const { user } = useSupabaseAuth();
