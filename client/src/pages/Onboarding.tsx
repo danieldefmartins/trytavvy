@@ -36,10 +36,12 @@ import {
   TrendingUp,
   Image as ImageIcon,
   Video,
-  ChevronRight
+  ChevronRight,
+  Search
 } from "lucide-react";
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/lib/supabase";
+import { SERVICE_CATEGORIES as CATEGORIES_DATA, searchCategories, getFeaturedCategories, ServiceCategory } from "@/data/serviceCategories";
 
 // Brand colors matching the existing theme
 const COLORS = {
@@ -248,6 +250,7 @@ export default function OnboardingNew() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [categorySearch, setCategorySearch] = useState('');
 
   // Calculate profile completion percentage
   const calculateCompletion = useCallback((): number => {
@@ -531,9 +534,21 @@ export default function OnboardingNew() {
     </div>
   );
 
-  // Step 2: Category Selection
+  // Step 2: Category Selection with Search
   const Step2Categories = () => {
-    const categories = SERVICE_CATEGORIES[data.providerType] || [];
+    const allCategories = CATEGORIES_DATA[data.providerType as keyof typeof CATEGORIES_DATA] || [];
+    const featuredCategories = getFeaturedCategories(data.providerType);
+    const searchResults = categorySearch ? searchCategories(data.providerType, categorySearch) : [];
+    const showSearch = categorySearch.length > 0;
+    const displayCategories = showSearch ? searchResults : featuredCategories;
+    
+    const handleCategorySelect = (catName: string) => {
+      updateData({ 
+        primaryCategory: catName,
+        secondaryCategories: data.secondaryCategories.filter(c => c !== catName)
+      });
+      setCategorySearch('');
+    };
     
     return (
       <div className="space-y-6">
@@ -546,19 +561,62 @@ export default function OnboardingNew() {
           </p>
         </div>
 
+        {/* Search Bar */}
+        <div className="relative">
+          <Search 
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" 
+            style={{ color: COLORS.textMuted }} 
+          />
+          <input
+            type="text"
+            className="flex h-12 w-full rounded-xl border px-3 py-2 pl-11 text-base"
+            placeholder="Search for a category (e.g., plumbing, roofing, landscaping...)"
+            value={categorySearch}
+            onChange={(e) => setCategorySearch(e.target.value)}
+            style={{ 
+              backgroundColor: COLORS.backgroundCard,
+              borderColor: COLORS.border,
+              color: COLORS.text
+            }}
+          />
+          {categorySearch && (
+            <button
+              onClick={() => setCategorySearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2"
+            >
+              <X className="h-5 w-5" style={{ color: COLORS.textMuted }} />
+            </button>
+          )}
+        </div>
+
+        {/* Category Results */}
         <div className="space-y-4">
-          <Label style={{ color: COLORS.textMuted }}>Primary Category *</Label>
-          <div className="grid grid-cols-2 gap-3">
-            {categories.map((cat) => {
+          <div className="flex items-center justify-between">
+            <Label style={{ color: COLORS.textMuted }}>
+              {showSearch ? `Search Results (${searchResults.length})` : 'Popular Categories'}
+            </Label>
+            {!showSearch && (
+              <span className="text-sm" style={{ color: COLORS.textDim }}>
+                {allCategories.length} total categories
+              </span>
+            )}
+          </div>
+          
+          {displayCategories.length === 0 && showSearch && (
+            <div className="text-center py-8" style={{ color: COLORS.textMuted }}>
+              <p>No categories found for "{categorySearch}"</p>
+              <p className="text-sm mt-2">Try a different search term</p>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto">
+            {displayCategories.map((cat) => {
               const isSelected = data.primaryCategory === cat.name;
               
               return (
                 <button
                   key={cat.name}
-                  onClick={() => updateData({ 
-                    primaryCategory: cat.name,
-                    secondaryCategories: data.secondaryCategories.filter(c => c !== cat.name)
-                  })}
+                  onClick={() => handleCategorySelect(cat.name)}
                   className={`p-4 rounded-xl border transition-all text-left ${
                     isSelected ? 'scale-[1.02]' : 'hover:scale-[1.01]'
                   }`}
@@ -569,23 +627,71 @@ export default function OnboardingNew() {
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{cat.icon}</span>
-                    <span className="font-medium" style={{ color: COLORS.text }}>
-                      {cat.name}
-                    </span>
+                    <div className="flex-1 min-w-0">
+                      <span className="font-medium block truncate" style={{ color: COLORS.text }}>
+                        {cat.name}
+                      </span>
+                      {showSearch && cat.subcategories.length > 0 && (
+                        <span className="text-xs truncate block" style={{ color: COLORS.textDim }}>
+                          {cat.subcategories.slice(0, 3).join(', ')}...
+                        </span>
+                      )}
+                    </div>
+                    {isSelected && (
+                      <CheckCircle className="h-5 w-5 flex-shrink-0" style={{ color: COLORS.teal }} />
+                    )}
                   </div>
                 </button>
               );
             })}
           </div>
+          
+          {/* Show all categories link */}
+          {!showSearch && (
+            <button
+              onClick={() => setCategorySearch(' ')}
+              className="w-full py-3 text-center rounded-xl border transition-all hover:bg-opacity-10"
+              style={{ 
+                borderColor: COLORS.border,
+                color: COLORS.teal
+              }}
+            >
+              <span className="flex items-center justify-center gap-2">
+                <Search className="h-4 w-4" />
+                Browse all {allCategories.length} categories
+              </span>
+            </button>
+          )}
         </div>
 
+        {/* Selected Primary Category */}
         {data.primaryCategory && (
-          <div className="space-y-4 mt-8">
+          <div className="p-4 rounded-xl" style={{ backgroundColor: `${COLORS.teal}10`, borderColor: COLORS.teal, border: '1px solid' }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CheckCircle className="h-5 w-5" style={{ color: COLORS.teal }} />
+                <span style={{ color: COLORS.text }}>
+                  <strong>Primary:</strong> {data.primaryCategory}
+                </span>
+              </div>
+              <button
+                onClick={() => updateData({ primaryCategory: '', secondaryCategories: [] })}
+                className="text-sm" style={{ color: COLORS.textMuted }}
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Secondary Categories */}
+        {data.primaryCategory && (
+          <div className="space-y-4 mt-6">
             <Label style={{ color: COLORS.textMuted }}>
               Secondary Categories (optional, up to 3)
             </Label>
-            <div className="grid grid-cols-2 gap-3">
-              {categories
+            <div className="grid grid-cols-2 gap-3 max-h-[250px] overflow-y-auto">
+              {allCategories
                 .filter(cat => cat.name !== data.primaryCategory)
                 .map((cat) => {
                   const isSelected = data.secondaryCategories.includes(cat.name);
@@ -606,7 +712,7 @@ export default function OnboardingNew() {
                         }
                       }}
                       disabled={!canSelect}
-                      className={`p-4 rounded-xl border transition-all text-left ${
+                      className={`p-3 rounded-xl border transition-all text-left ${
                         !canSelect ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.01]'
                       }`}
                       style={{
@@ -614,19 +720,39 @@ export default function OnboardingNew() {
                         borderColor: isSelected ? COLORS.gold : COLORS.border,
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{cat.icon}</span>
-                        <span className="font-medium" style={{ color: COLORS.text }}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{cat.icon}</span>
+                        <span className="font-medium text-sm truncate" style={{ color: COLORS.text }}>
                           {cat.name}
                         </span>
                         {isSelected && (
-                          <CheckCircle className="h-5 w-5 ml-auto" style={{ color: COLORS.gold }} />
+                          <CheckCircle className="h-4 w-4 ml-auto flex-shrink-0" style={{ color: COLORS.gold }} />
                         )}
                       </div>
                     </button>
                   );
                 })}
             </div>
+            
+            {/* Selected secondary categories summary */}
+            {data.secondaryCategories.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {data.secondaryCategories.map(cat => (
+                  <Badge 
+                    key={cat}
+                    variant="secondary"
+                    className="flex items-center gap-1 cursor-pointer"
+                    style={{ backgroundColor: `${COLORS.gold}20`, color: COLORS.gold }}
+                    onClick={() => updateData({ 
+                      secondaryCategories: data.secondaryCategories.filter(c => c !== cat)
+                    })}
+                  >
+                    {cat}
+                    <X className="h-3 w-3" />
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
