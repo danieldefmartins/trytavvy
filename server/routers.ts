@@ -30,6 +30,7 @@ import {
   createCustomerPortalSession,
   getSubscription,
   verifyWebhookSignature,
+  verifyCheckoutSession,
   handleSubscriptionCreated,
   handleSubscriptionUpdated,
   handleSubscriptionDeleted,
@@ -495,6 +496,18 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const subscription = await getSubscription(input.subscriptionId);
         return subscription;
+      }),
+
+    // Verify checkout session - CRITICAL for preventing payment bypass
+    verifySession: publicProcedure
+      .input(
+        z.object({
+          sessionId: z.string(),
+        })
+      )
+      .query(async ({ input }) => {
+        const result = await verifyCheckoutSession(input.sessionId);
+        return result;
       }),
   }),
 });

@@ -256,4 +256,56 @@ export async function handlePaymentFailed(
   // - Notify user to update payment method
 }
 
+/**
+ * Verify a checkout session and return payment status
+ * This is used to prevent users from bypassing payment by manipulating URL parameters
+ */
+export interface VerifiedSession {
+  valid: boolean;
+  paymentStatus: string;
+  customerEmail: string | null;
+  plan: string | null;
+  interval: string | null;
+  subscriptionId: string | null;
+  customerId: string | null;
+}
+
+export async function verifyCheckoutSession(
+  sessionId: string
+): Promise<VerifiedSession> {
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['subscription', 'customer'],
+    });
+
+    // Check if payment was successful
+    const isValid = session.payment_status === 'paid' && session.status === 'complete';
+
+    return {
+      valid: isValid,
+      paymentStatus: session.payment_status,
+      customerEmail: session.customer_email || (session.customer as Stripe.Customer)?.email || null,
+      plan: session.metadata?.plan || null,
+      interval: session.metadata?.interval || null,
+      subscriptionId: typeof session.subscription === 'string' 
+        ? session.subscription 
+        : (session.subscription as Stripe.Subscription)?.id || null,
+      customerId: typeof session.customer === 'string'
+        ? session.customer
+        : (session.customer as Stripe.Customer)?.id || null,
+    };
+  } catch (error) {
+    console.error('Error verifying checkout session:', error);
+    return {
+      valid: false,
+      paymentStatus: 'error',
+      customerEmail: null,
+      plan: null,
+      interval: null,
+      subscriptionId: null,
+      customerId: null,
+    };
+  }
+}
+
 export { stripe };

@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, UserPlus, AlertCircle, CheckCircle, PartyPopper, Crown, Check, ArrowRight } from "lucide-react";
+import { Loader2, UserPlus, AlertCircle, CheckCircle, PartyPopper, Crown, Check, ArrowRight, ShieldAlert } from "lucide-react";
 import { signUpWithEmail } from "@/lib/supabase";
+import { trpc } from "@/lib/trpc";
 
 // Brand colors
 const COLORS = {
@@ -18,6 +19,7 @@ const COLORS = {
   gold: '#D4A84B',
   goldLight: '#E5B84D',
   green: '#10B981',
+  red: '#EF4444',
   border: '#1F1F1F',
   text: '#FFFFFF',
   textMuted: '#9CA3AF',
@@ -28,7 +30,8 @@ export default function Signup() {
   const [, setLocation] = useLocation();
   const searchString = useSearch();
   const searchParams = new URLSearchParams(searchString);
-  const paymentSuccess = searchParams.get("payment") === "success";
+  const paymentParam = searchParams.get("payment");
+  const sessionIdFromUrl = searchParams.get("session_id");
   const planFromUrl = searchParams.get("plan") as 'pro' | 'pro_plus' | null;
   
   const [fullName, setFullName] = useState("");
@@ -39,18 +42,63 @@ export default function Signup() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'pro' | 'pro_plus'>(planFromUrl || 'pro');
+  
+  // Payment verification state
+  const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verified' | 'failed' | 'no_session'>('pending');
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
 
-  // Update selected plan when URL changes
-  useEffect(() => {
-    if (planFromUrl) {
-      setSelectedPlan(planFromUrl);
+  // Verify the Stripe session on mount
+  const { data: sessionData, isLoading: isVerifying, error: verifyError } = trpc.stripe.verifySession.useQuery(
+    { sessionId: sessionIdFromUrl || '' },
+    { 
+      enabled: !!sessionIdFromUrl && paymentParam === 'success',
+      retry: false,
+      staleTime: Infinity, // Don't refetch - session verification is one-time
     }
-  }, [planFromUrl]);
+  );
+
+  // Handle verification result
+  useEffect(() => {
+    if (!sessionIdFromUrl || paymentParam !== 'success') {
+      setVerificationStatus('no_session');
+      return;
+    }
+
+    if (isVerifying) {
+      setVerificationStatus('pending');
+      return;
+    }
+
+    if (verifyError || !sessionData) {
+      setVerificationStatus('failed');
+      return;
+    }
+
+    if (sessionData.valid) {
+      setVerificationStatus('verified');
+      if (sessionData.customerEmail) {
+        setVerifiedEmail(sessionData.customerEmail);
+        setEmail(sessionData.customerEmail);
+      }
+      if (sessionData.plan) {
+        setSelectedPlan(sessionData.plan === 'proPlus' ? 'pro_plus' : 'pro');
+      }
+    } else {
+      setVerificationStatus('failed');
+    }
+  }, [sessionIdFromUrl, paymentParam, sessionData, isVerifying, verifyError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Double-check verification status before allowing signup
+    if (verificationStatus !== 'verified') {
+      setError("Payment verification failed. Please complete payment first.");
+      setLoading(false);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -111,6 +159,7 @@ export default function Signup() {
     "Priority support",
   ];
 
+  // Success state - account created
   if (success) {
     return (
       <div 
@@ -175,8 +224,8 @@ export default function Signup() {
     );
   }
 
-  // If payment was successful, show the account creation form
-  if (paymentSuccess) {
+  // Verification pending - show loading
+  if (verificationStatus === 'pending' && sessionIdFromUrl) {
     return (
       <div 
         className="min-h-screen flex items-center justify-center p-4"
@@ -187,336 +236,415 @@ export default function Signup() {
           style={{ backgroundColor: COLORS.backgroundCard }}
         >
           <CardHeader className="text-center">
-            <div 
-              className="mb-4 p-4 rounded-xl"
-              style={{ 
-                backgroundColor: `${COLORS.green}20`,
-                border: `1px solid ${COLORS.green}30`
-              }}
-            >
-              <div className="flex items-center justify-center gap-2 font-semibold mb-1" style={{ color: COLORS.green }}>
-                <PartyPopper className="h-5 w-5" />
-                Payment Successful!
-              </div>
-              <p className="text-sm" style={{ color: COLORS.green }}>
-                Welcome to Tavvy Pros {selectedPlan === 'pro_plus' ? 'Pro+' : 'Pro'}! Create your account to get started.
-              </p>
-            </div>
-            
-            {/* Show selected plan badge */}
-            <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4"
-              style={{ 
-                background: selectedPlan === 'pro_plus' 
-                  ? `linear-gradient(135deg, ${COLORS.gold} 0%, ${COLORS.goldLight} 100%)`
-                  : `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealDark} 100%)`,
-                color: 'black'
-              }}
-            >
-              {selectedPlan === 'pro_plus' && <Crown className="h-4 w-4" />}
-              <span className="font-semibold">
-                {selectedPlan === 'pro_plus' ? 'Pro+ Plan' : 'Pro Plan'}
-              </span>
-            </div>
-
             <div className="flex justify-center mb-4">
-              <img 
-                src="/tavvy-logo-2.png" 
-                alt="Tavvy" 
-                className="h-12 w-auto"
-              />
+              <Loader2 className="h-12 w-12 animate-spin" style={{ color: COLORS.teal }} />
             </div>
-            <CardTitle className="text-2xl text-white">Create Your Pro Account</CardTitle>
+            <CardTitle className="text-2xl text-white">Verifying Payment</CardTitle>
             <CardDescription style={{ color: COLORS.textMuted }}>
-              Complete your registration to access your Pro dashboard
+              Please wait while we verify your payment with Stripe...
             </CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="fullName" style={{ color: COLORS.textMuted }}>Full Name</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="John Doe"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  disabled={loading}
-                  style={{ 
-                    backgroundColor: COLORS.background,
-                    borderColor: COLORS.border,
-                    color: 'white'
-                  }}
-                  className="placeholder:text-gray-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email" style={{ color: COLORS.textMuted }}>Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={loading}
-                  style={{ 
-                    backgroundColor: COLORS.background,
-                    borderColor: COLORS.border,
-                    color: 'white'
-                  }}
-                  className="placeholder:text-gray-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password" style={{ color: COLORS.textMuted }}>Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                  style={{ 
-                    backgroundColor: COLORS.background,
-                    borderColor: COLORS.border,
-                    color: 'white'
-                  }}
-                  className="placeholder:text-gray-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" style={{ color: COLORS.textMuted }}>Confirm Password</Label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                  style={{ 
-                    backgroundColor: COLORS.background,
-                    borderColor: COLORS.border,
-                    color: 'white'
-                  }}
-                  className="placeholder:text-gray-500"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-4">
-              <Button 
-                type="submit" 
-                className="w-full font-semibold"
-                style={{ 
-                  background: selectedPlan === 'pro_plus'
-                    ? `linear-gradient(135deg, ${COLORS.gold} 0%, ${COLORS.goldLight} 100%)`
-                    : `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealDark} 100%)`,
-                  color: 'black'
-                }}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    Create {selectedPlan === 'pro_plus' ? 'Pro+' : 'Pro'} Account
-                  </>
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="link"
-                className="p-0 h-auto"
-                style={{ color: COLORS.textMuted }}
-                onClick={() => setLocation("/login")}
-              >
-                Already have an account? Sign in
-              </Button>
-            </CardFooter>
-          </form>
         </Card>
       </div>
     );
   }
 
-  // Default view - redirect to landing page pricing
-  // Users should not be able to access signup without payment
-  useEffect(() => {
-    if (!paymentSuccess) {
-      setLocation('/#pricing');
-    }
-  }, [paymentSuccess, setLocation]);
-
-  // If no payment success, show loading while redirecting
-  return (
-    <div 
-      className="min-h-screen py-12 px-4"
-      style={{ backgroundColor: COLORS.background }}
-    >
-      <div className="container mx-auto max-w-4xl">
-        <div className="text-center mb-10">
-          <img 
-            src="/tavvy-logo-2.png" 
-            alt="Tavvy" 
-            className="h-12 w-auto mx-auto mb-4"
-          />
-          <h1 className="text-3xl font-bold text-white mb-2">Choose Your Plan</h1>
-          <p style={{ color: COLORS.textMuted }}>Select the plan that's right for your business</p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {/* Pro Plan Card */}
-          <div 
-            className="rounded-2xl p-6 shadow-lg cursor-pointer transition-all"
-            style={{ 
-              backgroundColor: COLORS.backgroundCard,
-              border: selectedPlan === 'pro' 
-                ? `2px solid ${COLORS.teal}` 
-                : `1px solid ${COLORS.border}`,
-              boxShadow: selectedPlan === 'pro' ? `0 0 30px ${COLORS.teal}30` : undefined
-            }}
-            onClick={() => setSelectedPlan('pro')}
-          >
-            <div className="flex items-center justify-between mb-4">
+  // Verification failed - show error
+  if (verificationStatus === 'failed') {
+    return (
+      <div 
+        className="min-h-screen flex items-center justify-center p-4"
+        style={{ backgroundColor: COLORS.background }}
+      >
+        <Card 
+          className="w-full max-w-md border-none shadow-xl"
+          style={{ backgroundColor: COLORS.backgroundCard }}
+        >
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
               <div 
-                className="inline-block text-xs font-bold px-3 py-1 rounded-full"
-                style={{ backgroundColor: COLORS.teal, color: 'black' }}
+                className="w-16 h-16 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: COLORS.red }}
               >
-                MOST POPULAR
-              </div>
-              <div 
-                className="w-6 h-6 rounded-full border-2 flex items-center justify-center"
-                style={{ 
-                  borderColor: selectedPlan === 'pro' ? COLORS.teal : COLORS.border,
-                  backgroundColor: selectedPlan === 'pro' ? COLORS.teal : 'transparent'
-                }}
-              >
-                {selectedPlan === 'pro' && <Check className="w-4 h-4 text-black" />}
+                <ShieldAlert className="h-8 w-8 text-white" />
               </div>
             </div>
-            
-            <h3 className="text-xl font-bold text-white mb-1">Pro</h3>
-            <div className="flex items-baseline gap-1 mb-2">
-              <span className="text-4xl font-bold text-white">$199</span>
-              <span style={{ color: COLORS.textDim }}>/first year</span>
-            </div>
-            <p className="text-xs mb-4" style={{ color: COLORS.textDim }}>Then $599/year</p>
-            
-            <div className="space-y-2">
-              {proFeatures.map((feature, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 flex-shrink-0" style={{ color: COLORS.teal }} />
-                  <span className="text-sm" style={{ color: COLORS.textMuted }}>{feature}</span>
+            <CardTitle className="text-2xl text-white">Payment Verification Failed</CardTitle>
+            <CardDescription style={{ color: COLORS.textMuted }}>
+              We couldn't verify your payment. This could happen if:
+            </CardDescription>
+          </CardHeader>
+          <CardContent style={{ color: COLORS.textMuted }}>
+            <ul className="text-sm space-y-2 list-disc list-inside">
+              <li>The payment session has expired</li>
+              <li>The payment was not completed</li>
+              <li>The session ID is invalid</li>
+            </ul>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-3">
+            <Button 
+              className="w-full font-semibold"
+              style={{ 
+                background: `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.gold} 100%)`,
+                color: 'black'
+              }}
+              onClick={() => setLocation("/#pricing")}
+            >
+              Try Again - Go to Pricing
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              style={{ borderColor: COLORS.border, color: COLORS.textMuted }}
+              onClick={() => setLocation("/login")}
+            >
+              Already have an account? Sign in
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  // No session - redirect to pricing
+  if (verificationStatus === 'no_session') {
+    return (
+      <div 
+        className="min-h-screen py-12 px-4"
+        style={{ backgroundColor: COLORS.background }}
+      >
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-10">
+            <img 
+              src="/tavvy-logo-2.png" 
+              alt="Tavvy" 
+              className="h-12 w-auto mx-auto mb-4"
+            />
+            <h1 className="text-3xl font-bold text-white mb-2">Choose Your Plan</h1>
+            <p style={{ color: COLORS.textMuted }}>Select the plan that's right for your business</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Pro Plan Card */}
+            <div 
+              className="rounded-2xl p-6 shadow-lg cursor-pointer transition-all"
+              style={{ 
+                backgroundColor: COLORS.backgroundCard,
+                border: selectedPlan === 'pro' 
+                  ? `2px solid ${COLORS.teal}` 
+                  : `1px solid ${COLORS.border}`,
+                boxShadow: selectedPlan === 'pro' ? `0 0 30px ${COLORS.teal}30` : undefined
+              }}
+              onClick={() => setSelectedPlan('pro')}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div 
+                  className="inline-block text-xs font-bold px-3 py-1 rounded-full"
+                  style={{ backgroundColor: COLORS.teal, color: 'black' }}
+                >
+                  MOST POPULAR
                 </div>
-              ))}
+                <div 
+                  className="w-6 h-6 rounded-full border-2 flex items-center justify-center"
+                  style={{ 
+                    borderColor: selectedPlan === 'pro' ? COLORS.teal : COLORS.border,
+                    backgroundColor: selectedPlan === 'pro' ? COLORS.teal : 'transparent'
+                  }}
+                >
+                  {selectedPlan === 'pro' && <Check className="w-4 h-4 text-black" />}
+                </div>
+              </div>
+              
+              <h3 className="text-xl font-bold text-white mb-1">Pro</h3>
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-4xl font-bold text-white">$199</span>
+                <span style={{ color: COLORS.textDim }}>/first year</span>
+              </div>
+              <p className="text-xs mb-4" style={{ color: COLORS.textDim }}>Then $599/year</p>
+              
+              <div className="space-y-2">
+                {proFeatures.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Check className="w-4 h-4 flex-shrink-0" style={{ color: COLORS.teal }} />
+                    <span className="text-sm" style={{ color: COLORS.textMuted }}>{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pro+ Plan Card */}
+            <div 
+              className="rounded-2xl p-6 shadow-lg cursor-pointer transition-all"
+              style={{ 
+                background: `linear-gradient(135deg, ${COLORS.backgroundCard} 0%, #1a1a1a 100%)`,
+                border: selectedPlan === 'pro_plus' 
+                  ? `2px solid ${COLORS.gold}` 
+                  : `1px solid ${COLORS.border}`,
+                boxShadow: selectedPlan === 'pro_plus' ? `0 0 30px ${COLORS.gold}30` : undefined
+              }}
+              onClick={() => setSelectedPlan('pro_plus')}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div 
+                  className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full"
+                  style={{ backgroundColor: COLORS.gold, color: 'black' }}
+                >
+                  <Crown className="w-3 h-3" />
+                  BEST VALUE
+                </div>
+                <div 
+                  className="w-6 h-6 rounded-full border-2 flex items-center justify-center"
+                  style={{ 
+                    borderColor: selectedPlan === 'pro_plus' ? COLORS.gold : COLORS.border,
+                    backgroundColor: selectedPlan === 'pro_plus' ? COLORS.gold : 'transparent'
+                  }}
+                >
+                  {selectedPlan === 'pro_plus' && <Check className="w-4 h-4 text-black" />}
+                </div>
+              </div>
+              
+              <h3 className="text-xl font-bold text-white mb-1">Pro+</h3>
+              <div className="flex items-baseline gap-1 mb-2">
+                <span className="text-4xl font-bold text-white">$599</span>
+                <span style={{ color: COLORS.textDim }}>/first year</span>
+              </div>
+              <p className="text-xs mb-4" style={{ color: COLORS.textDim }}>Then $1,399/year</p>
+              
+              <div className="space-y-2">
+                {proPlusFeatures.map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <Check className="w-4 h-4 flex-shrink-0" style={{ color: COLORS.gold }} />
+                    <span 
+                      className={`text-sm ${i === 0 ? 'font-semibold' : ''}`}
+                      style={{ color: i === 0 ? COLORS.gold : COLORS.textMuted }}
+                    >
+                      {feature}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Pro+ Plan Card */}
-          <div 
-            className="rounded-2xl p-6 shadow-lg cursor-pointer transition-all"
-            style={{ 
-              background: `linear-gradient(135deg, ${COLORS.backgroundCard} 0%, #1a1a1a 100%)`,
-              border: selectedPlan === 'pro_plus' 
-                ? `2px solid ${COLORS.gold}` 
-                : `1px solid ${COLORS.border}`,
-              boxShadow: selectedPlan === 'pro_plus' ? `0 0 30px ${COLORS.gold}30` : undefined
-            }}
-            onClick={() => setSelectedPlan('pro_plus')}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div 
-                className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full"
-                style={{ backgroundColor: COLORS.gold, color: 'black' }}
-              >
-                <Crown className="w-3 h-3" />
-                BEST VALUE
-              </div>
-              <div 
-                className="w-6 h-6 rounded-full border-2 flex items-center justify-center"
-                style={{ 
-                  borderColor: selectedPlan === 'pro_plus' ? COLORS.gold : COLORS.border,
-                  backgroundColor: selectedPlan === 'pro_plus' ? COLORS.gold : 'transparent'
-                }}
-              >
-                {selectedPlan === 'pro_plus' && <Check className="w-4 h-4 text-black" />}
-              </div>
-            </div>
+          {/* Continue Button */}
+          <div className="text-center">
+            <Button
+              size="lg"
+              className="px-12 py-6 text-lg shadow-xl transition-all hover:scale-[1.02] font-semibold"
+              style={{ 
+                background: selectedPlan === 'pro_plus'
+                  ? `linear-gradient(135deg, ${COLORS.gold} 0%, ${COLORS.goldLight} 100%)`
+                  : `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealDark} 100%)`,
+                color: 'black',
+                boxShadow: selectedPlan === 'pro_plus' 
+                  ? `0 10px 30px ${COLORS.gold}30`
+                  : `0 10px 30px ${COLORS.teal}30`
+              }}
+              onClick={() => {
+                // Redirect to Stripe checkout
+                window.location.href = `/?checkout=${selectedPlan}`;
+              }}
+            >
+              Continue with {selectedPlan === 'pro_plus' ? 'Pro+' : 'Pro'} - ${selectedPlan === 'pro_plus' ? '599' : '199'} first year
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
             
-            <h3 className="text-xl font-bold text-white mb-1">Pro+</h3>
-            <div className="flex items-baseline gap-1 mb-2">
-              <span className="text-4xl font-bold text-white">$599</span>
-              <span style={{ color: COLORS.textDim }}>/first year</span>
-            </div>
-            <p className="text-xs mb-4" style={{ color: COLORS.textDim }}>Then $1,399/year</p>
-            
-            <div className="space-y-2">
-              {proPlusFeatures.map((feature, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 flex-shrink-0" style={{ color: COLORS.gold }} />
-                  <span 
-                    className={`text-sm ${i === 0 ? 'font-semibold' : ''}`}
-                    style={{ color: i === 0 ? COLORS.gold : COLORS.textMuted }}
-                  >
-                    {feature}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm mt-4" style={{ color: COLORS.textDim }}>
+              30-day money-back guarantee. No questions asked.
+            </p>
+
+            <Button
+              type="button"
+              variant="link"
+              className="mt-4 p-0 h-auto"
+              style={{ color: COLORS.textMuted }}
+              onClick={() => setLocation("/login")}
+            >
+              Already have an account? Sign in
+            </Button>
           </div>
-        </div>
-
-        {/* Continue Button */}
-        <div className="text-center">
-          <Button
-            size="lg"
-            className="px-12 py-6 text-lg shadow-xl transition-all hover:scale-[1.02] font-semibold"
-            style={{ 
-              background: selectedPlan === 'pro_plus'
-                ? `linear-gradient(135deg, ${COLORS.gold} 0%, ${COLORS.goldLight} 100%)`
-                : `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealDark} 100%)`,
-              color: 'black',
-              boxShadow: selectedPlan === 'pro_plus' 
-                ? `0 10px 30px ${COLORS.gold}30`
-                : `0 10px 30px ${COLORS.teal}30`
-            }}
-            onClick={() => {
-              // Redirect to Stripe checkout
-              window.location.href = `/?checkout=${selectedPlan}`;
-            }}
-          >
-            Continue with {selectedPlan === 'pro_plus' ? 'Pro+' : 'Pro'} - ${selectedPlan === 'pro_plus' ? '599' : '199'} first year
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
-          
-          <p className="text-sm mt-4" style={{ color: COLORS.textDim }}>
-            30-day money-back guarantee. No questions asked.
-          </p>
-
-          <Button
-            type="button"
-            variant="link"
-            className="mt-4 p-0 h-auto"
-            style={{ color: COLORS.textMuted }}
-            onClick={() => setLocation("/login")}
-          >
-            Already have an account? Sign in
-          </Button>
         </div>
       </div>
+    );
+  }
+
+  // Payment verified - show account creation form
+  return (
+    <div 
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{ backgroundColor: COLORS.background }}
+    >
+      <Card 
+        className="w-full max-w-md border-none shadow-xl"
+        style={{ backgroundColor: COLORS.backgroundCard }}
+      >
+        <CardHeader className="text-center">
+          <div 
+            className="mb-4 p-4 rounded-xl"
+            style={{ 
+              backgroundColor: `${COLORS.green}20`,
+              border: `1px solid ${COLORS.green}30`
+            }}
+          >
+            <div className="flex items-center justify-center gap-2 font-semibold mb-1" style={{ color: COLORS.green }}>
+              <PartyPopper className="h-5 w-5" />
+              Payment Verified!
+            </div>
+            <p className="text-sm" style={{ color: COLORS.green }}>
+              Welcome to Tavvy Pros {selectedPlan === 'pro_plus' ? 'Pro+' : 'Pro'}! Create your account to get started.
+            </p>
+          </div>
+          
+          {/* Show selected plan badge */}
+          <div 
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4"
+            style={{ 
+              background: selectedPlan === 'pro_plus' 
+                ? `linear-gradient(135deg, ${COLORS.gold} 0%, ${COLORS.goldLight} 100%)`
+                : `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealDark} 100%)`,
+              color: 'black'
+            }}
+          >
+            {selectedPlan === 'pro_plus' && <Crown className="h-4 w-4" />}
+            <span className="font-semibold">
+              {selectedPlan === 'pro_plus' ? 'Pro+ Plan' : 'Pro Plan'}
+            </span>
+          </div>
+
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/tavvy-logo-2.png" 
+              alt="Tavvy" 
+              className="h-12 w-auto"
+            />
+          </div>
+          <CardTitle className="text-2xl text-white">Create Your Pro Account</CardTitle>
+          <CardDescription style={{ color: COLORS.textMuted }}>
+            Complete your registration to access your Pro dashboard
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="fullName" style={{ color: COLORS.textMuted }}>Full Name</Label>
+              <Input
+                id="fullName"
+                type="text"
+                placeholder="John Doe"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                disabled={loading}
+                style={{ 
+                  backgroundColor: COLORS.background,
+                  borderColor: COLORS.border,
+                  color: 'white'
+                }}
+                className="placeholder:text-gray-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email" style={{ color: COLORS.textMuted }}>Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading || !!verifiedEmail}
+                style={{ 
+                  backgroundColor: verifiedEmail ? COLORS.backgroundAlt : COLORS.background,
+                  borderColor: COLORS.border,
+                  color: 'white'
+                }}
+                className="placeholder:text-gray-500"
+              />
+              {verifiedEmail && (
+                <p className="text-xs" style={{ color: COLORS.green }}>
+                  ✓ Email verified from payment
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password" style={{ color: COLORS.textMuted }}>Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                style={{ 
+                  backgroundColor: COLORS.background,
+                  borderColor: COLORS.border,
+                  color: 'white'
+                }}
+                className="placeholder:text-gray-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" style={{ color: COLORS.textMuted }}>Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={loading}
+                style={{ 
+                  backgroundColor: COLORS.background,
+                  borderColor: COLORS.border,
+                  color: 'white'
+                }}
+                className="placeholder:text-gray-500"
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4">
+            <Button 
+              type="submit" 
+              className="w-full font-semibold"
+              style={{ 
+                background: selectedPlan === 'pro_plus'
+                  ? `linear-gradient(135deg, ${COLORS.gold} 0%, ${COLORS.goldLight} 100%)`
+                  : `linear-gradient(135deg, ${COLORS.teal} 0%, ${COLORS.tealDark} 100%)`,
+                color: 'black'
+              }}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Create {selectedPlan === 'pro_plus' ? 'Pro+' : 'Pro'} Account
+                </>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="link"
+              className="p-0 h-auto"
+              style={{ color: COLORS.textMuted }}
+              onClick={() => setLocation("/login")}
+            >
+              Already have an account? Sign in
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 }
