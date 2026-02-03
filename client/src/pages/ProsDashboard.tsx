@@ -345,6 +345,98 @@ export default function ProsDashboard() {
           </CardContent>
         </Card>
 
+        {/* Request Reviews Section */}
+        <Card className="mb-8 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                <Send className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <CardTitle className="text-green-900">Request Reviews</CardTitle>
+                <CardDescription>Share this link with your customers to collect reviews</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Review Link */}
+              <div className="flex items-center gap-2">
+                <div className="flex-1 p-3 bg-white rounded-lg border border-green-200 font-mono text-sm text-gray-700 truncate">
+                  {`${window.location.origin}/review/${profile?.id || user?.id}`}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-green-300 hover:bg-green-100"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/review/${profile?.id || user?.id}`);
+                    setLinkCopied(true);
+                    setTimeout(() => setLinkCopied(false), 2000);
+                  }}
+                >
+                  {linkCopied ? (
+                    <><CheckCircle className="h-4 w-4 mr-1 text-green-600" /> Copied!</>
+                  ) : (
+                    <><Copy className="h-4 w-4 mr-1" /> Copy</>
+                  )}
+                </Button>
+              </div>
+              
+              {/* Share Options */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-green-300 hover:bg-green-100"
+                  onClick={() => {
+                    const url = `${window.location.origin}/review/${profile?.id || user?.id}`;
+                    const text = `I'd love to hear your feedback! Please leave a review: ${url}`;
+                    window.open(`sms:?body=${encodeURIComponent(text)}`, '_blank');
+                  }}
+                >
+                  <MessageSquare className="h-4 w-4 mr-1" /> Send via SMS
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-green-300 hover:bg-green-100"
+                  onClick={() => {
+                    const url = `${window.location.origin}/review/${profile?.id || user?.id}`;
+                    const subject = `Please leave a review for ${profile?.business_name || 'my business'}`;
+                    const body = `Hi!\n\nThank you for choosing ${profile?.business_name || 'us'}! I'd really appreciate it if you could take a moment to share your experience.\n\nClick here to leave a review: ${url}\n\nThank you!`;
+                    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                  }}
+                >
+                  <Mail className="h-4 w-4 mr-1" /> Send via Email
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="border-green-300 hover:bg-green-100"
+                  onClick={() => {
+                    const url = `${window.location.origin}/review/${profile?.id || user?.id}`;
+                    const text = `I'd love to hear your feedback! Please leave a review for ${profile?.business_name || 'my business'}: ${url}`;
+                    if (navigator.share) {
+                      navigator.share({ title: 'Leave a Review', text, url });
+                    } else {
+                      navigator.clipboard.writeText(text);
+                      setLinkCopied(true);
+                      setTimeout(() => setLinkCopied(false), 2000);
+                    }
+                  }}
+                >
+                  <Share2 className="h-4 w-4 mr-1" /> Share
+                </Button>
+              </div>
+              
+              <p className="text-xs text-green-700">
+                💡 Tip: Send this link to customers after completing a job to collect authentic reviews
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Leads */}
