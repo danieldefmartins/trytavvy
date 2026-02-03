@@ -42,7 +42,7 @@ import {
 import { useSupabaseAuth } from "@/contexts/SupabaseAuthContext";
 import { supabase } from "@/lib/supabase";
 import { SERVICE_CATEGORIES_V2 as CATEGORIES_DATA, searchCategoriesV2 as searchCategories, FEATURED_CATEGORIES_V2 as FEATURED_CATEGORIES, getCategoriesForProviderType, getSubcategoriesForCategory, getServicesForSubcategory, Category, Subcategory } from "@/data/serviceCategoriesV2";
-import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+// AddressAutocomplete removed - using simple input fields instead
 
 // Brand colors matching the existing theme
 const COLORS = {
@@ -954,29 +954,89 @@ export default function OnboardingNew() {
 
       {data.locationType === 'fixed' ? (
         <div className="space-y-4">
-          <AddressAutocomplete
-            value={{
-              address: data.address,
-              address2: data.address2,
-              city: data.city,
-              state: data.state,
-              zipCode: data.zipCode,
-              country: 'US',
-            }}
-            onChange={(addr) => updateData({
-              address: addr.address,
-              address2: addr.address2,
-              city: addr.city,
-              state: addr.state,
-              zipCode: addr.zipCode,
-            })}
-            inputStyle={{ 
-              backgroundColor: COLORS.backgroundCard,
-              borderColor: COLORS.border,
-              color: COLORS.text
-            }}
-            labelStyle={{ color: COLORS.textMuted }}
-          />
+          {/* Street Address */}
+          <div className="space-y-2">
+            <Label style={{ color: COLORS.textMuted }}>Street Address *</Label>
+            <div className="relative">
+              <MapPin 
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" 
+                style={{ color: COLORS.teal }} 
+              />
+              <input
+                className="flex h-10 w-full rounded-md border px-3 py-2 pl-10 text-sm"
+                placeholder="123 Main Street"
+                defaultValue={data.address}
+                onBlur={(e) => updateData({ address: e.target.value })}
+                style={{ 
+                  backgroundColor: COLORS.backgroundCard,
+                  borderColor: COLORS.border,
+                  color: COLORS.text
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Apt/Suite/Unit */}
+          <div className="space-y-2">
+            <Label style={{ color: COLORS.textMuted }}>Apt, Suite, Unit (optional)</Label>
+            <input
+              className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+              placeholder="Apt 4B, Suite 200, Unit 5..."
+              defaultValue={data.address2}
+              onBlur={(e) => updateData({ address2: e.target.value })}
+              style={{ 
+                backgroundColor: COLORS.backgroundCard,
+                borderColor: COLORS.border,
+                color: COLORS.text
+              }}
+            />
+          </div>
+
+          {/* City, State, ZIP */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-2">
+              <Label style={{ color: COLORS.textMuted }}>City *</Label>
+              <input
+                className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+                placeholder="Miami"
+                defaultValue={data.city}
+                onBlur={(e) => updateData({ city: e.target.value })}
+                style={{ 
+                  backgroundColor: COLORS.backgroundCard,
+                  borderColor: COLORS.border,
+                  color: COLORS.text
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label style={{ color: COLORS.textMuted }}>State *</Label>
+              <input
+                className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+                placeholder="FL"
+                defaultValue={data.state}
+                onBlur={(e) => updateData({ state: e.target.value })}
+                style={{ 
+                  backgroundColor: COLORS.backgroundCard,
+                  borderColor: COLORS.border,
+                  color: COLORS.text
+                }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label style={{ color: COLORS.textMuted }}>ZIP Code *</Label>
+              <input
+                className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+                placeholder="33101"
+                defaultValue={data.zipCode}
+                onBlur={(e) => updateData({ zipCode: e.target.value })}
+                style={{ 
+                  backgroundColor: COLORS.backgroundCard,
+                  borderColor: COLORS.border,
+                  color: COLORS.text
+                }}
+              />
+            </div>
+          </div>
           
           <div className="space-y-2">
             <Label htmlFor="serviceRadius" style={{ color: COLORS.textMuted }}>Service Radius (miles)</Label>
