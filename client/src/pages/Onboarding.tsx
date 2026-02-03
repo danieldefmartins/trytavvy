@@ -290,6 +290,83 @@ function OnboardingContent() {
   const [categorySearch, setCategorySearch] = useState('');
   const [initialLoading, setInitialLoading] = useState(true);
 
+  // Sanitize data to ensure all values are safe for React rendering
+  const sanitizeOnboardingData = (rawData: any): Partial<OnboardingData> => {
+    const sanitized: any = {};
+    
+    // Helper to ensure string
+    const ensureString = (val: any): string => {
+      if (val === null || val === undefined) return '';
+      if (typeof val === 'string') return val;
+      if (typeof val === 'object' && val.name) return String(val.name);
+      return String(val);
+    };
+    
+    // Helper to ensure string array
+    const ensureStringArray = (arr: any): string[] => {
+      if (!Array.isArray(arr)) return [];
+      return arr.map(item => ensureString(item)).filter(s => s !== '');
+    };
+    
+    // Helper to ensure service object
+    const ensureService = (s: any): { name: string; description: string; priceType: string; priceMin: string; priceMax: string } | null => {
+      if (!s) return null;
+      if (typeof s === 'string') {
+        return { name: s, description: '', priceType: 'quote', priceMin: '', priceMax: '' };
+      }
+      if (typeof s === 'object') {
+        return {
+          name: ensureString(s.name),
+          description: ensureString(s.description),
+          priceType: ensureString(s.priceType) || 'quote',
+          priceMin: ensureString(s.priceMin),
+          priceMax: ensureString(s.priceMax)
+        };
+      }
+      return null;
+    };
+    
+    // Sanitize each field
+    if (rawData.providerType !== undefined) sanitized.providerType = ensureString(rawData.providerType);
+    if (rawData.primaryCategory !== undefined) sanitized.primaryCategory = ensureString(rawData.primaryCategory);
+    if (rawData.selectedSubcategories !== undefined) sanitized.selectedSubcategories = ensureStringArray(rawData.selectedSubcategories);
+    if (rawData.businessName !== undefined) sanitized.businessName = ensureString(rawData.businessName);
+    if (rawData.phone !== undefined) sanitized.phone = ensureString(rawData.phone);
+    if (rawData.email !== undefined) sanitized.email = ensureString(rawData.email);
+    if (rawData.website !== undefined) sanitized.website = ensureString(rawData.website);
+    if (rawData.locationType !== undefined) sanitized.locationType = ensureString(rawData.locationType);
+    if (rawData.address !== undefined) sanitized.address = ensureString(rawData.address);
+    if (rawData.address2 !== undefined) sanitized.address2 = ensureString(rawData.address2);
+    if (rawData.city !== undefined) sanitized.city = ensureString(rawData.city);
+    if (rawData.state !== undefined) sanitized.state = ensureString(rawData.state);
+    if (rawData.zipCode !== undefined) sanitized.zipCode = ensureString(rawData.zipCode);
+    if (rawData.serviceAreas !== undefined) sanitized.serviceAreas = ensureStringArray(rawData.serviceAreas);
+    if (rawData.serviceRadius !== undefined) sanitized.serviceRadius = Number(rawData.serviceRadius) || 25;
+    if (rawData.shortBio !== undefined) sanitized.shortBio = ensureString(rawData.shortBio);
+    if (rawData.fullDescription !== undefined) sanitized.fullDescription = ensureString(rawData.fullDescription);
+    if (rawData.currentStep !== undefined) sanitized.currentStep = Number(rawData.currentStep) || 1;
+    if (rawData.byAppointmentOnly !== undefined) sanitized.byAppointmentOnly = Boolean(rawData.byAppointmentOnly);
+    if (rawData.highlights !== undefined) sanitized.highlights = ensureStringArray(rawData.highlights);
+    
+    // Sanitize services array
+    if (rawData.services !== undefined) {
+      if (Array.isArray(rawData.services)) {
+        sanitized.services = rawData.services.map(ensureService).filter((s: any) => s !== null && s.name !== '');
+      } else {
+        sanitized.services = [];
+      }
+    }
+    
+    // Pass through other fields that don't need sanitization
+    if (rawData.hours !== undefined) sanitized.hours = rawData.hours;
+    if (rawData.profilePhoto !== undefined) sanitized.profilePhoto = rawData.profilePhoto;
+    if (rawData.coverPhoto !== undefined) sanitized.coverPhoto = rawData.coverPhoto;
+    if (rawData.workPhotos !== undefined) sanitized.workPhotos = Array.isArray(rawData.workPhotos) ? rawData.workPhotos : [];
+    
+    console.log('Sanitized data:', sanitized);
+    return sanitized;
+  };
+
   // Load saved progress when component mounts
   useEffect(() => {
     const loadSavedProgress = async () => {
@@ -305,14 +382,21 @@ function OnboardingContent() {
           try {
             const savedData = JSON.parse(localProgress);
             console.log('Restoring from localStorage, step:', savedData.currentStep);
+            console.log('Raw localStorage data:', savedData);
+            
+            // SANITIZE the data before using it
+            const sanitizedData = sanitizeOnboardingData(savedData);
+            
             setData(prev => ({
               ...prev,
-              ...savedData,
+              ...sanitizedData,
             }));
             setInitialLoading(false);
             return;
           } catch (parseErr) {
             console.error('Error parsing localStorage:', parseErr);
+            // Clear corrupted localStorage
+            localStorage.removeItem(`onboarding_progress_${user.id}`);
           }
         }
 
