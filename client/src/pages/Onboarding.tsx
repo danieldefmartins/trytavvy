@@ -594,7 +594,32 @@ function OnboardingContent() {
     setError(null);
 
     try {
+      // Save progress first
       await saveProgress();
+      
+      // Mark onboarding as completed in database
+      if (user) {
+        const { error: updateError } = await supabase
+          .from('pro_providers')
+          .update({ 
+            onboarding_completed_at: new Date().toISOString(),
+            onboarding_step: TOTAL_STEPS,
+            is_active: true
+          })
+          .eq('user_id', user.id);
+        
+        if (updateError) {
+          console.error('Error marking onboarding complete:', updateError);
+        }
+      }
+      
+      // Clear localStorage after successful completion
+      if (user) {
+        localStorage.removeItem(`onboarding_progress_${user.id}`);
+      }
+      
+      // Show success and redirect
+      alert('🎉 Your profile has been created successfully! Welcome to Tavvy!');
       setLocation("/dashboard");
     } catch (err) {
       console.error('Error completing onboarding:', err);
