@@ -299,52 +299,97 @@ export default function OnboardingNew() {
       }
 
       try {
-        // First check for existing pro record
-        const { data: proData } = await supabase
-          .from('pros')
-          .select(`
-            *,
-            places:place_id (*)
-          `)
+        // Load from pro_providers table
+        const { data: proData, error } = await supabase
+          .from('pro_providers')
+          .select('*')
           .eq('user_id', user.id)
           .single();
 
+        if (error) {
+          console.log('No existing pro_providers record found, starting fresh');
+          // Check localStorage backup
+          const backup = localStorage.getItem(`onboarding_backup_${user.id}`);
+          if (backup) {
+            try {
+              const backupData = JSON.parse(backup);
+              console.log('Restoring from localStorage backup');
+              setData(prev => ({
+                ...prev,
+                ...backupData,
+              }));
+            } catch (parseErr) {
+              console.error('Error parsing localStorage backup:', parseErr);
+            }
+          }
+          setInitialLoading(false);
+          return;
+        }
+
         if (proData) {
-          const place = proData.places;
-          const specialties = Array.isArray(proData.specialties) ? proData.specialties : [];
+          console.log('Found existing pro_providers record, restoring...');
           
-          // Restore saved data
-          setData(prev => ({
-            ...prev,
-            providerType: proData.provider_type || '',
-            primaryCategory: specialties[0] || '',
-            selectedSubcategories: specialties.slice(1) || [],
-            businessName: place?.name || '',
-            phone: place?.phone || '',
-            email: place?.email || '',
-            website: place?.website || '',
-            yearEstablished: proData.year_established?.toString() || '',
-            locationType: proData.service_areas?.length > 0 ? 'mobile' : 'fixed',
-            address: place?.address || '',
-            address2: '',
-            city: place?.city || '',
-            state: place?.state || '',
-            zipCode: place?.zip_code || '',
-            serviceAreas: Array.isArray(proData.service_areas) ? proData.service_areas : [],
-            serviceRadius: proData.service_radius || 25,
-            hours: place?.hours || initialData.hours,
-            byAppointmentOnly: false,
-            services: Array.isArray(proData.services) ? proData.services : [],
-            profilePhoto: place?.logo || null,
-            coverPhoto: place?.cover_photo || null,
-            workPhotos: Array.isArray(place?.photos) ? place.photos : [],
-            highlights: Array.isArray(proData.highlights) ? proData.highlights : [],
-            licenseNumber: proData.license_number || '',
-            licenseState: proData.license_state || '',
-            shortBio: proData.bio || place?.short_description || '',
-            fullDescription: place?.description || '',
-            currentStep: proData.onboarding_step || 1,
-          }));
+          // If we have onboarding_data JSONB, use that for full restoration
+          const savedData = proData.onboarding_data as OnboardingData | null;
+          
+          if (savedData && typeof savedData === 'object') {
+            // Full restoration from onboarding_data JSONB
+            setData(prev => ({
+              ...prev,
+              providerType: savedData.providerType || proData.provider_type || '',
+              primaryCategory: savedData.primaryCategory || proData.trade_category || '',
+              selectedSubcategories: savedData.selectedSubcategories || proData.specialties || [],
+              businessName: savedData.businessName || proData.business_name || '',
+              phone: savedData.phone || proData.phone || '',
+              email: savedData.email || proData.email || '',
+              website: savedData.website || proData.website || '',
+              yearEstablished: savedData.yearEstablished || '',
+              locationType: savedData.locationType || (proData.service_areas?.length > 0 ? 'mobile' : 'fixed'),
+              address: savedData.address || proData.address || '',
+              address2: savedData.address2 || '',
+              city: savedData.city || proData.city || '',
+              state: savedData.state || proData.state || '',
+              zipCode: savedData.zipCode || proData.zip_code || '',
+              serviceAreas: savedData.serviceAreas || proData.service_areas || [],
+              serviceRadius: savedData.serviceRadius || proData.service_radius || 25,
+              hours: savedData.hours || initialData.hours,
+              byAppointmentOnly: savedData.byAppointmentOnly || false,
+              services: savedData.services || [],
+              profilePhoto: savedData.profilePhoto || proData.profile_photo_url || null,
+              coverPhoto: savedData.coverPhoto || proData.cover_photo_url || null,
+              workPhotos: savedData.workPhotos || [],
+              highlights: savedData.highlights || [],
+              licenseNumber: savedData.licenseNumber || '',
+              licenseState: savedData.licenseState || '',
+              shortBio: savedData.shortBio || proData.bio || '',
+              fullDescription: savedData.fullDescription || proData.description || '',
+              currentStep: proData.onboarding_step || 1,
+            }));
+          } else {
+            // Partial restoration from individual columns
+            setData(prev => ({
+              ...prev,
+              providerType: proData.provider_type || '',
+              primaryCategory: proData.trade_category || '',
+              selectedSubcategories: proData.specialties || [],
+              businessName: proData.business_name || '',
+              phone: proData.phone || '',
+              email: proData.email || '',
+              website: proData.website || '',
+              locationType: proData.service_areas?.length > 0 ? 'mobile' : 'fixed',
+              address: proData.address || '',
+              city: proData.city || '',
+              state: proData.state || '',
+              zipCode: proData.zip_code || '',
+              serviceAreas: proData.service_areas || [],
+              serviceRadius: proData.service_radius || 25,
+              profilePhoto: proData.profile_photo_url || null,
+              coverPhoto: proData.cover_photo_url || null,
+              shortBio: proData.bio || '',
+              fullDescription: proData.description || '',
+              currentStep: proData.onboarding_step || 1,
+            }));
+          }
         }
       } catch (err) {
         console.error('Error loading saved progress:', err);
@@ -433,109 +478,93 @@ export default function OnboardingNew() {
     
     setSaving(true);
     try {
-      // First, create or update the place
-      const placeData = {
-        name: data.businessName,
+      // Generate a slug from business name if not exists
+      const slug = data.businessName 
+        ? data.businessName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + user.id.substring(0, 8)
+        : 'pro-' + user.id.substring(0, 8);
+
+      // Store all onboarding data in a JSONB column for easy restoration
+      const onboardingData = {
+        providerType: data.providerType,
+        primaryCategory: data.primaryCategory,
+        selectedSubcategories: data.selectedSubcategories,
+        businessName: data.businessName,
         phone: data.phone,
-        email: data.email || user.email,
+        email: data.email,
         website: data.website,
+        yearEstablished: data.yearEstablished,
+        locationType: data.locationType,
         address: data.address,
+        address2: data.address2,
         city: data.city,
         state: data.state,
-        zip_code: data.zipCode,
-        description: data.fullDescription,
-        short_description: data.shortBio,
+        zipCode: data.zipCode,
+        serviceAreas: data.serviceAreas,
+        serviceRadius: data.serviceRadius,
         hours: data.hours,
-        photos: data.workPhotos,
-        cover_photo: data.coverPhoto,
-        logo: data.profilePhoto,
-        place_type: data.providerType,
-        is_verified: false,
-        updated_at: new Date().toISOString(),
+        byAppointmentOnly: data.byAppointmentOnly,
+        services: data.services,
+        profilePhoto: data.profilePhoto,
+        coverPhoto: data.coverPhoto,
+        workPhotos: data.workPhotos,
+        highlights: data.highlights,
+        licenseNumber: data.licenseNumber,
+        licenseState: data.licenseState,
+        shortBio: data.shortBio,
+        fullDescription: data.fullDescription,
       };
 
-      // Check if place exists
-      const { data: existingPro } = await supabase
-        .from('pros')
-        .select('place_id')
-        .eq('user_id', user.id)
-        .single();
-
-      let placeId: string;
-
-      if (existingPro?.place_id) {
-        // Update existing place
-        const { error: placeError } = await supabase
-          .from('places')
-          .update(placeData)
-          .eq('id', existingPro.place_id);
-        
-        if (placeError) throw placeError;
-        placeId = existingPro.place_id;
-      } else {
-        // Create new place
-        const { data: newPlace, error: placeError } = await supabase
-          .from('places')
-          .insert({ ...placeData, created_at: new Date().toISOString() })
-          .select('id')
-          .single();
-        
-        if (placeError) throw placeError;
-        placeId = newPlace.id;
-      }
-
-      // Now update or create the pro record
+      // Save to pro_providers table with the correct schema
       const proData = {
         user_id: user.id,
-        place_id: placeId,
-        provider_type: data.providerType,
-        specialties: [data.primaryCategory, ...data.selectedSubcategories],
-        services: data.services,
-        service_areas: data.serviceAreas,
-        service_radius: data.serviceRadius,
-        year_established: data.yearEstablished ? parseInt(data.yearEstablished) : null,
-        highlights: data.highlights,
-        license_number: data.licenseNumber,
-        license_state: data.licenseState,
-        bio: data.shortBio,
+        business_name: data.businessName || 'My Business',
+        slug: slug,
+        phone: data.phone || null,
+        email: data.email || user.email || null,
+        website: data.website || null,
+        address: data.address || null,
+        city: data.city || null,
+        state: data.state || null,
+        zip_code: data.zipCode || null,
+        service_radius: data.serviceRadius || 25,
+        service_areas: data.serviceAreas || [],
+        provider_type: data.providerType || 'pro',
+        trade_category: data.primaryCategory || null,
+        specialties: data.selectedSubcategories || [],
+        bio: data.shortBio || null,
+        description: data.fullDescription || null,
+        short_description: data.shortBio || null,
+        profile_photo_url: data.profilePhoto || null,
+        cover_photo_url: data.coverPhoto || null,
         onboarding_step: data.currentStep,
-        profile_completion: completion,
-        onboarding_completed: data.currentStep === TOTAL_STEPS,
+        onboarding_data: onboardingData,
+        onboarding_completed_at: data.currentStep === TOTAL_STEPS ? new Date().toISOString() : null,
         is_active: true,
         updated_at: new Date().toISOString(),
       };
 
       const { error: proError } = await supabase
-        .from('pros')
+        .from('pro_providers')
         .upsert(proData, { onConflict: 'user_id' });
 
-      if (proError) throw proError;
+      if (proError) {
+        console.error('Error saving to pro_providers:', proError);
+        throw proError;
+      }
+
+      console.log('Progress saved successfully to pro_providers');
 
     } catch (err) {
       console.error('Error saving progress:', err);
-      // Try fallback to pro_providers table
+      // Store in localStorage as backup
       try {
-        const fallbackData = {
-          user_id: user.id,
-          business_name: data.businessName,
-          phone: data.phone,
-          email: data.email || user.email,
-          website: data.website,
-          city: data.city,
-          state: data.state,
-          zip_code: data.zipCode,
-          bio: data.shortBio,
-          services: data.services,
-          provider_type: data.providerType,
-          specialties: [data.primaryCategory, ...data.selectedSubcategories],
-          onboarding_step: data.currentStep,
-          is_active: true,
-          updated_at: new Date().toISOString(),
-        };
-        await supabase.from('pro_providers').upsert(fallbackData, { onConflict: 'user_id' });
-      } catch (fallbackErr) {
-        console.error('Fallback save also failed:', fallbackErr);
-        // Don't show error to user - just log it
+        localStorage.setItem(`onboarding_backup_${user.id}`, JSON.stringify({
+          ...data,
+          savedAt: new Date().toISOString()
+        }));
+        console.log('Progress saved to localStorage as backup');
+      } catch (localErr) {
+        console.error('LocalStorage backup also failed:', localErr);
       }
     } finally {
       setSaving(false);
@@ -1285,17 +1314,32 @@ export default function OnboardingNew() {
   const Step7Services = () => {
     const [newService, setNewService] = useState({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
 
-    // Ensure services is always an array
-    const services = Array.isArray(data.services) ? data.services : [];
+    // Ensure services is always an array with valid objects
+    const services = Array.isArray(data.services) 
+      ? data.services.filter(s => s && typeof s === 'object')
+      : [];
     
     // Get suggested services from selected subcategories using V2 data structure
-    const category = getCategoriesForProviderType(data.providerType || '').find(c => c.name === data.primaryCategory);
-    const selectedSubcats = Array.isArray(data.selectedSubcategories) ? data.selectedSubcategories : [];
-    const selectedSubs = category?.subcategories?.filter(sub => selectedSubcats.includes(sub.name)) || [];
-    const suggestedServices = selectedSubs
-      .flatMap(sub => sub.services || [])
-      .filter((s, i, arr) => arr.indexOf(s) === i) // Remove duplicates
-      .filter(s => !services.some(svc => svc.name?.toLowerCase() === s.toLowerCase())); // Remove already added
+    // Add defensive checks for every step
+    let suggestedServices: string[] = [];
+    try {
+      const providerType = data.providerType || 'pro';
+      const categories = getCategoriesForProviderType(providerType);
+      const category = Array.isArray(categories) ? categories.find(c => c?.name === data.primaryCategory) : null;
+      const selectedSubcats = Array.isArray(data.selectedSubcategories) ? data.selectedSubcategories : [];
+      const subcategories = category?.subcategories;
+      const selectedSubs = Array.isArray(subcategories) 
+        ? subcategories.filter(sub => sub && selectedSubcats.includes(sub.name)) 
+        : [];
+      suggestedServices = selectedSubs
+        .flatMap(sub => Array.isArray(sub?.services) ? sub.services : [])
+        .filter((s): s is string => typeof s === 'string')
+        .filter((s, i, arr) => arr.indexOf(s) === i) // Remove duplicates
+        .filter(s => !services.some(svc => svc?.name?.toLowerCase() === s.toLowerCase())); // Remove already added
+    } catch (err) {
+      console.error('Error getting suggested services:', err);
+      suggestedServices = [];
+    }
 
     const addService = () => {
       if (newService.name.trim()) {
