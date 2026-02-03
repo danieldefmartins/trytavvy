@@ -365,7 +365,9 @@ function OnboardingContent() {
     let score = 0;
     
     // Safe array access helpers
-    const serviceAreas = Array.isArray(data.serviceAreas) ? data.serviceAreas : [];
+    const serviceAreas = Array.isArray(data.serviceAreas) 
+      ? data.serviceAreas.map(a => typeof a === 'string' ? a : String(a || '')).filter(a => a !== '')
+      : [];
     const services = Array.isArray(data.services) ? data.services : [];
     const workPhotos = Array.isArray(data.workPhotos) ? data.workPhotos : [];
     const highlights = Array.isArray(data.highlights) ? data.highlights : [];
@@ -737,7 +739,9 @@ function OnboardingContent() {
   const Step3Subcategories = () => {
     const category = getCategoriesForProviderType(data.providerType).find(c => c.name === data.primaryCategory);
     const subcategories = category?.subcategories || [];
-    const selectedSubcategories = Array.isArray(data.selectedSubcategories) ? data.selectedSubcategories : [];
+    const selectedSubcategories = Array.isArray(data.selectedSubcategories) 
+      ? data.selectedSubcategories.map(s => typeof s === 'string' ? s : String(s?.name || s || '')).filter(s => s !== '')
+      : [];
     
     const toggleSubcategory = (subName: string) => {
       if (selectedSubcategories.includes(subName)) {
@@ -821,13 +825,13 @@ function OnboardingContent() {
           <div className="flex flex-wrap gap-2 mt-4">
             {selectedSubcategories.map(sub => (
               <Badge 
-                key={sub}
+                key={String(sub)}
                 variant="secondary"
                 className="flex items-center gap-1 cursor-pointer"
                 style={{ backgroundColor: `${COLORS.gold}20`, color: COLORS.gold }}
-                onClick={() => toggleSubcategory(sub)}
+                onClick={() => toggleSubcategory(String(sub))}
               >
-                {sub}
+                {String(sub)}
                 <X className="h-3 w-3" />
               </Badge>
             ))}
@@ -959,7 +963,9 @@ function OnboardingContent() {
 
   // Step 5: Location & Service Area
   const Step5Location = () => {
-    const serviceAreas = Array.isArray(data.serviceAreas) ? data.serviceAreas : [];
+    const serviceAreas = Array.isArray(data.serviceAreas) 
+      ? data.serviceAreas.map(a => typeof a === 'string' ? a : String(a || '')).filter(a => a !== '')
+      : [];
     
     return (
     <div className="space-y-6">
@@ -1153,7 +1159,7 @@ function OnboardingContent() {
                 className="px-3 py-1 flex items-center gap-2"
                 style={{ backgroundColor: `${COLORS.teal}20`, color: COLORS.teal }}
               >
-                {area}
+                {String(area)}
                 <button onClick={() => updateData({ serviceAreas: serviceAreas.filter((_, i) => i !== idx) })}>
                   <X className="h-3 w-3" />
                 </button>
@@ -1523,8 +1529,10 @@ function OnboardingContent() {
 
   // Step 8: Business Highlights
   const Step9Highlights = () => {
-    // Ensure highlights is always an array
-    const highlights = Array.isArray(data.highlights) ? data.highlights : [];
+    // Ensure highlights is always an array of strings
+    const highlights = Array.isArray(data.highlights) 
+      ? data.highlights.map(h => typeof h === 'string' ? h : String(h || '')).filter(h => h !== '')
+      : [];
     
     return (
       <div className="space-y-6">
@@ -1659,7 +1667,9 @@ function OnboardingContent() {
     const workPhotos = Array.isArray(data.workPhotos) ? data.workPhotos : [];
     const services = Array.isArray(data.services) ? data.services : [];
     const highlights = Array.isArray(data.highlights) ? data.highlights : [];
-    const serviceAreas = Array.isArray(data.serviceAreas) ? data.serviceAreas : [];
+    const serviceAreas = Array.isArray(data.serviceAreas) 
+      ? data.serviceAreas.map(a => typeof a === 'string' ? a : String(a || '')).filter(a => a !== '')
+      : [];
     
     const getMissingItems = () => {
       const missing = [];
