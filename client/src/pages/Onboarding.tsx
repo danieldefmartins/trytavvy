@@ -176,6 +176,7 @@ interface OnboardingData {
   // Step 4: Business Info
   businessName: string;
   phone: string;
+  whatsappNumber: string;
   email: string;
   website: string;
   yearEstablished: string;
@@ -227,6 +228,7 @@ const initialData: OnboardingData = {
   selectedSubcategories: [],
   businessName: '',
   phone: '',
+  whatsappNumber: '',
   email: '',
   website: '',
   yearEstablished: '',
@@ -556,6 +558,7 @@ function OnboardingContent() {
         business_name: data.businessName || 'My Business',
         slug: slug,
         phone: data.phone || null,
+        whatsapp_number: data.whatsappNumber || null,
         email: data.email || user.email || null,
         website: data.website || null,
         address: data.address || null,
@@ -1162,6 +1165,27 @@ function OnboardingContent() {
             {phoneError && (
               <p className="text-xs" style={{ color: COLORS.red }}>Please enter a valid phone number (at least 10 digits)</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="whatsapp" style={{ color: COLORS.textMuted }}>
+              WhatsApp Number (optional)
+              <span className="ml-2 text-xs" style={{ color: COLORS.teal }}>💬 Let customers message you directly</span>
+            </Label>
+            <input
+              id="whatsapp"
+              className="flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+              type="tel"
+              placeholder="+1 (555) 123-4567"
+              defaultValue={data.whatsappNumber}
+              onBlur={(e) => updateData({ whatsappNumber: e.target.value })}
+              style={{ 
+                backgroundColor: COLORS.backgroundCard,
+                borderColor: COLORS.border,
+                color: COLORS.text
+              }}
+            />
+            <p className="text-xs" style={{ color: COLORS.textMuted }}>Include country code for international customers</p>
           </div>
 
           <div className="space-y-2">
