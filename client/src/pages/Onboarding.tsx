@@ -1319,12 +1319,12 @@ function OnboardingContent() {
         {/* Suggested Services */}
         {suggestedServices.length > 0 && services.length < 10 && (
           <div className="space-y-3">
-            <Label style={{ color: COLORS.textMuted }}>Quick Add from {String(data.primaryCategory || 'your category')}</Label>
+            <Label style={{ color: COLORS.textMuted }}>Quick Add from your category</Label>
             <div className="flex flex-wrap gap-2">
               {suggestedServices.slice(0, 8).map((service) => (
                 <button
-                  key={service}
-                  onClick={() => addSuggestedService(service)}
+                  key={String(service)}
+                  onClick={() => addSuggestedService(String(service))}
                   className="px-3 py-1.5 rounded-full text-sm flex items-center gap-1 transition-all hover:scale-105"
                   style={{ 
                     backgroundColor: `${COLORS.teal}15`,
@@ -1333,7 +1333,7 @@ function OnboardingContent() {
                   }}
                 >
                   <Plus className="h-3 w-3" />
-                  {service}
+                  {String(service)}
                 </button>
               ))}
             </div>
@@ -1350,14 +1350,14 @@ function OnboardingContent() {
                 style={{ backgroundColor: COLORS.backgroundCard }}
               >
                 <div>
-                  <h4 className="font-medium" style={{ color: COLORS.text }}>{service.name}</h4>
+                  <h4 className="font-medium" style={{ color: COLORS.text }}>{String(service.name || '')}</h4>
                   {service.description && (
-                    <p className="text-sm" style={{ color: COLORS.textMuted }}>{service.description}</p>
+                    <p className="text-sm" style={{ color: COLORS.textMuted }}>{String(service.description || '')}</p>
                   )}
                   <p className="text-sm" style={{ color: COLORS.teal }}>
-                    {service.priceType === 'quote' ? 'Quote' : 
-                     service.priceType === 'fixed' ? `$${service.priceMin}` :
-                     `$${service.priceMin} - $${service.priceMax}`}
+                    {String(service.priceType) === 'quote' ? 'Quote' : 
+                     String(service.priceType) === 'fixed' ? `$${String(service.priceMin || '')}` :
+                     `$${String(service.priceMin || '')} - $${String(service.priceMax || '')}`}
                   </p>
                 </div>
                 <button
