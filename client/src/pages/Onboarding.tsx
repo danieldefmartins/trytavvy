@@ -1136,74 +1136,84 @@ export default function OnboardingNew() {
   );
 
   // Step 5: Hours of Operation
-  const Step6Hours = () => (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.gold}20` }}>
-          <Clock className="h-8 w-8" style={{ color: COLORS.gold }} />
+  const Step6Hours = () => {
+    // Ensure hours data is properly initialized for all days
+    const getHoursForDay = (day: string) => {
+      return data.hours?.[day] || { open: '09:00', close: '17:00', closed: day === 'Sunday' };
+    };
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.gold}20` }}>
+            <Clock className="h-8 w-8" style={{ color: COLORS.gold }} />
+          </div>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
+            Hours of Operation
+          </h1>
+          <p style={{ color: COLORS.textMuted }}>
+            When are you available for customers?
+          </p>
         </div>
-        <h1 className="text-3xl font-bold mb-2" style={{ color: COLORS.text }}>
-          Hours of Operation
-        </h1>
-        <p style={{ color: COLORS.textMuted }}>
-          When are you available for customers?
-        </p>
-      </div>
 
-      <div className="flex items-center gap-3 p-4 rounded-xl" style={{ backgroundColor: COLORS.backgroundCard }}>
-        <Checkbox
-          checked={data.byAppointmentOnly}
-          onCheckedChange={(checked) => updateData({ byAppointmentOnly: checked as boolean })}
-        />
-        <Label style={{ color: COLORS.text }}>By Appointment Only</Label>
-      </div>
+        <div className="flex items-center gap-3 p-4 rounded-xl" style={{ backgroundColor: COLORS.backgroundCard }}>
+          <Checkbox
+            checked={data.byAppointmentOnly || false}
+            onCheckedChange={(checked) => updateData({ byAppointmentOnly: checked as boolean })}
+          />
+          <Label style={{ color: COLORS.text }}>By Appointment Only</Label>
+        </div>
 
-      {!data.byAppointmentOnly && (
-        <div className="space-y-3">
-          {DAYS_OF_WEEK.map((day) => (
-            <div
-              key={day}
-              className="flex items-center gap-4 p-4 rounded-xl"
-              style={{ backgroundColor: COLORS.backgroundCard }}
-            >
-              <Checkbox
-                checked={!data.hours[day]?.closed}
-                onCheckedChange={(checked) => updateData({
-                  hours: { ...data.hours, [day]: { ...data.hours[day], closed: !checked } }
-                })}
-              />
-              <span className="w-24 font-medium" style={{ color: COLORS.text }}>{day}</span>
-              {!data.hours[day]?.closed ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <Input
-                    type="time"
-                    value={data.hours[day]?.open || '09:00'}
-                    onChange={(e) => updateData({
-                      hours: { ...data.hours, [day]: { ...data.hours[day], open: e.target.value } }
+        {!data.byAppointmentOnly && (
+          <div className="space-y-3">
+            {DAYS_OF_WEEK.map((day) => {
+              const dayHours = getHoursForDay(day);
+              return (
+                <div
+                  key={day}
+                  className="flex items-center gap-4 p-4 rounded-xl"
+                  style={{ backgroundColor: COLORS.backgroundCard }}
+                >
+                  <Checkbox
+                    checked={!dayHours.closed}
+                    onCheckedChange={(checked) => updateData({
+                      hours: { ...data.hours, [day]: { ...dayHours, closed: !checked } }
                     })}
-                    className="w-32"
-                    style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
                   />
-                  <span style={{ color: COLORS.textMuted }}>to</span>
-                  <Input
-                    type="time"
-                    value={data.hours[day]?.close || '17:00'}
-                    onChange={(e) => updateData({
-                      hours: { ...data.hours, [day]: { ...data.hours[day], close: e.target.value } }
-                    })}
-                    className="w-32"
-                    style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
-                  />
+                  <span className="w-24 font-medium" style={{ color: COLORS.text }}>{day}</span>
+                  {!dayHours.closed ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <Input
+                        type="time"
+                        value={dayHours.open}
+                        onChange={(e) => updateData({
+                          hours: { ...data.hours, [day]: { ...dayHours, open: e.target.value } }
+                        })}
+                        className="w-32"
+                        style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
+                      />
+                      <span style={{ color: COLORS.textMuted }}>to</span>
+                      <Input
+                        type="time"
+                        value={dayHours.close}
+                        onChange={(e) => updateData({
+                          hours: { ...data.hours, [day]: { ...dayHours, close: e.target.value } }
+                        })}
+                        className="w-32"
+                        style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
+                      />
+                    </div>
+                  ) : (
+                    <span style={{ color: COLORS.textDim }}>Closed</span>
+                  )}
                 </div>
-              ) : (
-                <span style={{ color: COLORS.textDim }}>Closed</span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Step 6: Services
   const Step7Services = () => {
