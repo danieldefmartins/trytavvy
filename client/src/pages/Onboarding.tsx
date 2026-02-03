@@ -1337,6 +1337,12 @@ function OnboardingContent() {
 
   // Step 6: Services
   const Step7Services = () => {
+    // Debug: Log all data at the start of render
+    console.log('Step7Services render - data:', JSON.stringify(data, null, 2));
+    console.log('Step7Services render - data.services:', data.services);
+    console.log('Step7Services render - data.primaryCategory:', data.primaryCategory, typeof data.primaryCategory);
+    console.log('Step7Services render - data.selectedSubcategories:', data.selectedSubcategories);
+    
     const [newService, setNewService] = useState({ name: '', description: '', priceType: 'quote', priceMin: '', priceMax: '' });
 
     // Ensure services is always an array with valid objects
