@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,10 +24,14 @@ import {
   LogOut,
   Loader2,
   Settings,
-Clock,
+  Clock,
   CheckCircle,
   XCircle,
-  PlusCircle
+  PlusCircle,
+  Link,
+  Copy,
+  Share2,
+  Send
 } from "lucide-react";
 import { useLocation } from "wouter";
 
@@ -37,6 +41,7 @@ export default function ProsDashboard() {
   const { leads, loading: leadsLoading, getRecentLeads, getStats: getLeadStats } = useProLeads();
   const { unreadCount } = useUnreadMessages();
   const [, setLocation] = useLocation();
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const profileComplete = getProfileCompletion();
   const profileStats = getProfileStats();
