@@ -406,19 +406,26 @@ export default function OnboardingNew() {
   const calculateCompletion = useCallback((): number => {
     let score = 0;
     
+    // Safe array access helpers
+    const serviceAreas = Array.isArray(data.serviceAreas) ? data.serviceAreas : [];
+    const services = Array.isArray(data.services) ? data.services : [];
+    const workPhotos = Array.isArray(data.workPhotos) ? data.workPhotos : [];
+    const highlights = Array.isArray(data.highlights) ? data.highlights : [];
+    const hours = data.hours || {};
+    
     if (data.providerType) score += COMPLETION_WEIGHTS.providerType;
     if (data.primaryCategory) score += COMPLETION_WEIGHTS.primaryCategory;
     if (data.businessName) score += COMPLETION_WEIGHTS.businessName;
     if (data.phone) score += COMPLETION_WEIGHTS.phone;
-    if (data.address || data.serviceAreas.length > 0) score += COMPLETION_WEIGHTS.address;
-    if (Object.values(data.hours).some(h => !h.closed)) score += COMPLETION_WEIGHTS.hours;
-    if (data.services.length >= 3) score += COMPLETION_WEIGHTS.services;
-    else if (data.services.length > 0) score += Math.floor(COMPLETION_WEIGHTS.services * (data.services.length / 3));
+    if (data.address || serviceAreas.length > 0) score += COMPLETION_WEIGHTS.address;
+    if (Object.values(hours).some((h: any) => h && !h.closed)) score += COMPLETION_WEIGHTS.hours;
+    if (services.length >= 3) score += COMPLETION_WEIGHTS.services;
+    else if (services.length > 0) score += Math.floor(COMPLETION_WEIGHTS.services * (services.length / 3));
     if (data.profilePhoto) score += COMPLETION_WEIGHTS.profilePhoto;
     if (data.coverPhoto) score += COMPLETION_WEIGHTS.coverPhoto;
-    if (data.workPhotos.length >= 3) score += COMPLETION_WEIGHTS.workPhotos;
-    else if (data.workPhotos.length > 0) score += Math.floor(COMPLETION_WEIGHTS.workPhotos * (data.workPhotos.length / 3));
-    if (data.highlights.length > 0) score += COMPLETION_WEIGHTS.highlights;
+    if (workPhotos.length >= 3) score += COMPLETION_WEIGHTS.workPhotos;
+    else if (workPhotos.length > 0) score += Math.floor(COMPLETION_WEIGHTS.workPhotos * (workPhotos.length / 3));
+    if (highlights.length > 0) score += COMPLETION_WEIGHTS.highlights;
     if (data.shortBio || data.fullDescription) score += COMPLETION_WEIGHTS.bio;
     if (data.website) score += COMPLETION_WEIGHTS.website;
     
@@ -459,11 +466,11 @@ export default function OnboardingNew() {
     switch (data.currentStep) {
       case 1: return !!data.providerType;
       case 2: return !!data.primaryCategory;
-      case 3: return data.selectedSubcategories.length > 0; // Subcategories
+      case 3: return Array.isArray(data.selectedSubcategories) && data.selectedSubcategories.length > 0; // Subcategories
       case 4: return isValidBusinessName(data.businessName) && isValidPhone(data.phone) && isValidEmail(data.email); // Business Info with validation
-      case 5: return data.locationType === 'mobile' ? data.serviceAreas.length > 0 : (!!data.city && !!data.state && !!data.zipCode); // Location
+      case 5: return data.locationType === 'mobile' ? (Array.isArray(data.serviceAreas) && data.serviceAreas.length > 0) : (!!data.city && !!data.state && !!data.zipCode); // Location
       case 6: return true; // Hours are optional
-      case 7: return data.services.length > 0; // Services
+      case 7: return Array.isArray(data.services) && data.services.length > 0; // Services
       case 8: return true; // Photos are optional but encouraged
       case 9: return true; // Highlights are optional
       case 10: return !!data.shortBio; // Bio
@@ -806,15 +813,16 @@ export default function OnboardingNew() {
   const Step3Subcategories = () => {
     const category = getCategoriesForProviderType(data.providerType).find(c => c.name === data.primaryCategory);
     const subcategories = category?.subcategories || [];
+    const selectedSubcategories = Array.isArray(data.selectedSubcategories) ? data.selectedSubcategories : [];
     
     const toggleSubcategory = (subName: string) => {
-      if (data.selectedSubcategories.includes(subName)) {
+      if (selectedSubcategories.includes(subName)) {
         updateData({ 
-          selectedSubcategories: data.selectedSubcategories.filter(s => s !== subName)
+          selectedSubcategories: selectedSubcategories.filter(s => s !== subName)
         });
       } else {
         updateData({ 
-          selectedSubcategories: [...data.selectedSubcategories, subName]
+          selectedSubcategories: [...selectedSubcategories, subName]
         });
       }
     };
@@ -844,11 +852,11 @@ export default function OnboardingNew() {
         {/* Subcategories Grid */}
         <div className="space-y-4">
           <Label style={{ color: COLORS.textMuted }}>
-            Select your service areas ({data.selectedSubcategories.length} selected)
+            Select your service areas ({selectedSubcategories.length} selected)
           </Label>
           <div className="grid gap-3 max-h-[400px] overflow-y-auto">
             {subcategories.map((sub) => {
-              const isSelected = data.selectedSubcategories.includes(sub.name);
+              const isSelected = selectedSubcategories.includes(sub.name);
               
               return (
                 <button
@@ -885,9 +893,9 @@ export default function OnboardingNew() {
         </div>
 
         {/* Selected Subcategories Summary */}
-        {data.selectedSubcategories.length > 0 && (
+        {selectedSubcategories.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
-            {data.selectedSubcategories.map(sub => (
+            {selectedSubcategories.map(sub => (
               <Badge 
                 key={sub}
                 variant="secondary"
@@ -1026,7 +1034,10 @@ export default function OnboardingNew() {
   };
 
   // Step 5: Location & Service Area
-  const Step5Location = () => (
+  const Step5Location = () => {
+    const serviceAreas = Array.isArray(data.serviceAreas) ? data.serviceAreas : [];
+    
+    return (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: `${COLORS.green}20` }}>
@@ -1188,8 +1199,8 @@ export default function OnboardingNew() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   const value = (e.target as HTMLInputElement).value.trim();
-                  if (value && !data.serviceAreas.includes(value)) {
-                    updateData({ serviceAreas: [...data.serviceAreas, value] });
+                  if (value && !serviceAreas.includes(value)) {
+                    updateData({ serviceAreas: [...serviceAreas, value] });
                     (e.target as HTMLInputElement).value = '';
                   }
                 }
@@ -1201,8 +1212,8 @@ export default function OnboardingNew() {
               onClick={() => {
                 const input = document.querySelector('input[placeholder="Enter city or zip code"]') as HTMLInputElement;
                 const value = input?.value.trim();
-                if (value && !data.serviceAreas.includes(value)) {
-                  updateData({ serviceAreas: [...data.serviceAreas, value] });
+                if (value && !serviceAreas.includes(value)) {
+                  updateData({ serviceAreas: [...serviceAreas, value] });
                   input.value = '';
                 }
               }}
@@ -1212,14 +1223,14 @@ export default function OnboardingNew() {
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {data.serviceAreas.map((area, idx) => (
+            {serviceAreas.map((area, idx) => (
               <Badge
                 key={idx}
                 className="px-3 py-1 flex items-center gap-2"
                 style={{ backgroundColor: `${COLORS.teal}20`, color: COLORS.teal }}
               >
                 {area}
-                <button onClick={() => updateData({ serviceAreas: data.serviceAreas.filter((_, i) => i !== idx) })}>
+                <button onClick={() => updateData({ serviceAreas: serviceAreas.filter((_, i) => i !== idx) })}>
                   <X className="h-3 w-3" />
                 </button>
               </Badge>
@@ -1228,13 +1239,19 @@ export default function OnboardingNew() {
         </div>
       )}
     </div>
-  );
+    );
+  };
 
   // Step 5: Hours of Operation
   const Step6Hours = () => {
     // Ensure hours data is properly initialized for all days
+    const hours = data.hours || {};
     const getHoursForDay = (day: string) => {
-      return data.hours?.[day] || { open: '09:00', close: '17:00', closed: day === 'Sunday' };
+      return hours[day] || { open: '09:00', close: '17:00', closed: day === 'Sunday' };
+    };
+    
+    const updateHours = (day: string, newDayHours: { open: string; close: string; closed: boolean }) => {
+      updateData({ hours: { ...hours, [day]: newDayHours } });
     };
     
     return (
@@ -1271,9 +1288,7 @@ export default function OnboardingNew() {
                 >
                   <Checkbox
                     checked={!dayHours.closed}
-                    onCheckedChange={(checked) => updateData({
-                      hours: { ...data.hours, [day]: { ...dayHours, closed: !checked } }
-                    })}
+                    onCheckedChange={(checked) => updateHours(day, { ...dayHours, closed: !checked })}
                   />
                   <span className="w-24 font-medium" style={{ color: COLORS.text }}>{day}</span>
                   {!dayHours.closed ? (
@@ -1281,9 +1296,7 @@ export default function OnboardingNew() {
                       <Input
                         type="time"
                         value={dayHours.open}
-                        onChange={(e) => updateData({
-                          hours: { ...data.hours, [day]: { ...dayHours, open: e.target.value } }
-                        })}
+                        onChange={(e) => updateHours(day, { ...dayHours, open: e.target.value })}
                         className="w-32"
                         style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
                       />
@@ -1291,9 +1304,7 @@ export default function OnboardingNew() {
                       <Input
                         type="time"
                         value={dayHours.close}
-                        onChange={(e) => updateData({
-                          hours: { ...data.hours, [day]: { ...dayHours, close: e.target.value } }
-                        })}
+                        onChange={(e) => updateHours(day, { ...dayHours, close: e.target.value })}
                         className="w-32"
                         style={{ backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }}
                       />
@@ -1804,26 +1815,40 @@ export default function OnboardingNew() {
 
   // Render step content - using key prop to maintain input focus
   const renderStep = () => {
-    // Wrap each step in a div with a stable key to prevent remounting
-    const stepContent = (() => {
-      switch (data.currentStep) {
-        case 1: return Step1ProviderType();
-        case 2: return Step2Categories();
-        case 3: return Step3Subcategories();
-        case 4: return Step4BusinessInfo();
-        case 5: return Step5Location();
-        case 6: return Step6Hours();
-        case 7: return Step7Services();
-        case 8: return Step8Photos();
-        case 9: return Step9Highlights();
-        case 10: return Step10Bio();
-        case 11: return Step11Review();
-        default: return null;
-      }
-    })();
-    
-    // Key is based on step number only, not on data values
-    return <div key={`step-${data.currentStep}`}>{stepContent}</div>;
+    // Wrap each step in try-catch to catch and display errors
+    try {
+      const stepContent = (() => {
+        switch (data.currentStep) {
+          case 1: return Step1ProviderType();
+          case 2: return Step2Categories();
+          case 3: return Step3Subcategories();
+          case 4: return Step4BusinessInfo();
+          case 5: return Step5Location();
+          case 6: return Step6Hours();
+          case 7: return Step7Services();
+          case 8: return Step8Photos();
+          case 9: return Step9Highlights();
+          case 10: return Step10Bio();
+          case 11: return Step11Review();
+          default: return null;
+        }
+      })();
+      
+      // Key is based on step number only, not on data values
+      return <div key={`step-${data.currentStep}`}>{stepContent}</div>;
+    } catch (err) {
+      console.error('Error rendering step:', data.currentStep, err);
+      return (
+        <div className="text-center p-8">
+          <AlertCircle className="h-12 w-12 mx-auto mb-4" style={{ color: COLORS.red }} />
+          <h2 className="text-xl font-bold mb-2" style={{ color: COLORS.text }}>Something went wrong</h2>
+          <p className="mb-4" style={{ color: COLORS.textMuted }}>Error on step {data.currentStep}: {String(err)}</p>
+          <Button onClick={() => setData(prev => ({ ...prev, currentStep: 1 }))} style={{ backgroundColor: COLORS.teal }}>
+            Start Over
+          </Button>
+        </div>
+      );
+    }
   };
 
   // Show loading state while loading saved progress
