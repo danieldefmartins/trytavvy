@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -278,50 +278,6 @@ function getFeaturedCategories(providerType: string): Category[] {
   return featuredNames
     .map(name => allCategories.find(cat => cat.name === name))
     .filter((cat): cat is Category => cat !== undefined);
-}
-
-// Error Boundary to catch runtime errors
-class OnboardingErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: Error | null}> {
-  constructor(props: {children: React.ReactNode}) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Onboarding Error:', error, errorInfo);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#000000' }}>
-          <div className="text-center max-w-md">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#EF444420' }}>
-              <AlertCircle className="h-8 w-8" style={{ color: '#EF4444' }} />
-            </div>
-            <h2 className="text-xl font-bold mb-2" style={{ color: '#FFFFFF' }}>Something went wrong</h2>
-            <p className="mb-4" style={{ color: '#888888' }}>{this.state.error?.message || 'Unknown error'}</p>
-            <pre className="text-xs text-left p-3 rounded-lg mb-4 overflow-auto max-h-40" style={{ backgroundColor: '#111111', color: '#888888' }}>
-              {this.state.error?.stack}
-            </pre>
-            <button 
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 rounded-lg font-medium"
-              style={{ backgroundColor: '#00CED1', color: 'black' }}
-            >
-              Reload Page
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
 }
 
 function OnboardingContent() {
@@ -2004,11 +1960,4 @@ function OnboardingContent() {
   );
 }
 
-// Export with error boundary wrapper
-export default function OnboardingNew() {
-  return (
-    <OnboardingErrorBoundary>
-      <OnboardingContent />
-    </OnboardingErrorBoundary>
-  );
-}
+export default OnboardingContent;
