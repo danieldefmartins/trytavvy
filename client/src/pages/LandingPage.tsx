@@ -63,7 +63,7 @@ const PRICING = {
 export default function LandingPage() {
   const [, setLocation] = useLocation();
   const [billingCycle, setBillingCycle] = useState<'yearly' | 'monthly'>('yearly');
-  const [spotsLeft, setSpotsLeft] = useState(435);
+  const [spotsLeft, setSpotsLeft] = useState(230);
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentBusinessType, setCurrentBusinessType] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -118,7 +118,7 @@ export default function LandingPage() {
       const decrease = Math.min(Math.max(1, hoursAway * 2 + Math.floor(Math.random() * 3)), 50);
       currentSpots = Math.max(100, Math.min(parseInt(storedSpots) - decrease, 1000));
     } else {
-      currentSpots = 435;
+      currentSpots = 230;
     }
     
     setSpotsLeft(currentSpots);
