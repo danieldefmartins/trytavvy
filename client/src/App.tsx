@@ -9,6 +9,7 @@ import LandingPage from "./pages/LandingPage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Onboarding from "./pages/Onboarding";
 import ProsDashboard from "./pages/ProsDashboard";
 import DigitalCardEditor from "./pages/DigitalCardEditor";
@@ -96,6 +97,9 @@ function Router() {
         <PublicRoute>
           <ForgotPassword />
         </PublicRoute>
+      </Route>
+      <Route path="/reset-password">
+        <ResetPassword />
       </Route>
       
       {/* Protected Routes */}
