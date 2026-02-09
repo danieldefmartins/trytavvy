@@ -83,6 +83,15 @@ export default function Signup() {
       if (sessionData.plan) {
         setSelectedPlan(sessionData.plan === 'proPlus' ? 'pro_plus' : 'pro');
       }
+      // Track Stripe checkout for GHL affiliate attribution
+      try {
+        if (typeof window !== 'undefined' && (window as any).affiliateManager && sessionIdFromUrl) {
+          (window as any).affiliateManager.trackStripeCheckout({ sessionId: sessionIdFromUrl });
+          console.log('Affiliate Stripe checkout tracked:', sessionIdFromUrl);
+        }
+      } catch (err) {
+        console.warn('Affiliate Stripe checkout tracking error:', err);
+      }
     } else {
       setVerificationStatus('failed');
     }
