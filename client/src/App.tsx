@@ -19,6 +19,7 @@ import AddServiceLocation from "./pages/AddServiceLocation";
 import Pricing from "./pages/Pricing";
 import SubscriptionSuccess from "./pages/SubscriptionSuccess";
 import SubscriptionCancel from "./pages/SubscriptionCancel";
+import Affiliate from "./pages/Affiliate";
 import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 
@@ -134,6 +135,11 @@ function Router() {
         <PublicProCard />
       </Route>
       
+      {/* Affiliate Program */}
+      <Route path="/affiliate">
+        <Affiliate />
+      </Route>
+
       {/* Pricing and Subscription Routes */}
       <Route path="/pricing">
         <PublicRoute redirectToDashboard={false}>
