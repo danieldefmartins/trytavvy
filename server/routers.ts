@@ -440,10 +440,11 @@ export const appRouter = router({
           interval: z.enum(["monthly", "annual"]),
           couponId: z.string().optional(),
           email: z.string().email().optional(),
+          affiliateId: z.string().optional(),
         })
       )
       .mutation(async ({ input, ctx }) => {
-        const { plan, interval, couponId, email } = input;
+        const { plan, interval, couponId, email, affiliateId } = input;
         
         // Get price ID from config
         const priceId = STRIPE_CONFIG.products[plan].prices[interval].id;
@@ -460,6 +461,7 @@ export const appRouter = router({
           customerEmail,
           userId: ctx.user?.id,
           portalType: 'pros',
+          affiliateId,
           successUrl: `${process.env.PUBLIC_URL || 'http://localhost:5000'}/signup?payment=success&plan=${plan}&cycle=${interval}&session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: `${process.env.PUBLIC_URL || 'http://localhost:5000'}/subscription/cancel`,
         });

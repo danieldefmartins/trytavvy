@@ -20,6 +20,7 @@ export interface CreateCheckoutSessionParams {
   customerEmail?: string;
   userId?: string;
   portalType?: 'pros' | 'realtor' | 'onthego';
+  affiliateId?: string;
   successUrl: string;
   cancelUrl: string;
 }
@@ -38,6 +39,7 @@ export async function createCheckoutSession(
     customerEmail,
     userId,
     portalType = 'pros',
+    affiliateId,
     successUrl,
     cancelUrl,
   } = params;
@@ -62,6 +64,7 @@ export async function createCheckoutSession(
         plan,
         interval,
         portal_type: portalType,
+        ...(affiliateId && { affiliate_id: affiliateId }),
       },
       subscription_data: {
         metadata: {
@@ -69,6 +72,7 @@ export async function createCheckoutSession(
           plan,
           interval,
           portal_type: portalType,
+          ...(affiliateId && { affiliate_id: affiliateId }),
         },
       },
     };

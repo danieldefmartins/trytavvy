@@ -10,6 +10,93 @@ import { createClient } from '@supabase/supabase-js';
 // Go High Level API configuration
 const GHL_WEBHOOK_URL = process.env.GHL_WEBHOOK_URL || '';
 const GHL_API_KEY = process.env.GHL_API_KEY || '';
+const GHL_LOCATION_ID = process.env.GHL_LOCATION_ID || 'e7vdyR8r7Cys9twmOQzp';
+
+/**
+ * Report affiliate sale to Go High Level
+ * This attributes the Stripe payment to the affiliate who referred the customer
+ */
+async function reportAffiliateConversion(data: {
+  affiliateId: string;
+  email: string;
+  amount: number;
+  currency: string;
+  plan: string;
+  stripeSessionId: string;
+}): Promise<void> {
+  try {
+    console.log(`Reporting affiliate conversion for affiliate ${data.affiliateId}, email: ${data.email}`);
+    
+    // Method 1: Use GHL webhook to report the conversion
+    if (GHL_WEBHOOK_URL) {
+      const response = await fetch(GHL_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(GHL_API_KEY && { 'Authorization': `Bearer ${GHL_API_KEY}` }),
+        },
+        body: JSON.stringify({
+          email: data.email,
+          event: 'affiliate_sale',
+          affiliate_id: data.affiliateId,
+          amount: data.amount,
+          currency: data.currency,
+          plan: data.plan,
+          stripe_session_id: data.stripeSessionId,
+          source: 'tavvy_pros',
+          timestamp: new Date().toISOString(),
+          tags: [
+            'affiliate_conversion',
+            `affiliate_${data.affiliateId}`,
+            `plan_${data.plan}`,
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('GHL affiliate webhook failed:', response.status, errorText);
+      } else {
+        console.log('Successfully reported affiliate conversion to GHL for:', data.email);
+      }
+    }
+    
+    // Method 2: Use GHL Affiliate Manager API if available
+    if (GHL_API_KEY) {
+      try {
+        const apiResponse = await fetch(
+          `https://services.leadconnectorhq.com/affiliate-manager/campaign/${GHL_LOCATION_ID}/manual-sale`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${GHL_API_KEY}`,
+              'Version': '2021-07-28',
+            },
+            body: JSON.stringify({
+              affiliate_id: data.affiliateId,
+              amount: data.amount,
+              currency: data.currency,
+              email: data.email,
+              external_id: data.stripeSessionId,
+            }),
+          }
+        );
+        
+        if (apiResponse.ok) {
+          console.log('Successfully reported sale via GHL Affiliate API');
+        } else {
+          console.warn('GHL Affiliate API call failed (non-critical):', apiResponse.status);
+        }
+      } catch (apiErr) {
+        console.warn('GHL Affiliate API not available (non-critical):', apiErr);
+      }
+    }
+  } catch (error) {
+    console.error('Error reporting affiliate conversion:', error);
+    // Don't throw - affiliate tracking failure should not block the payment flow
+  }
+}
 
 /**
  * Send welcome automation to Go High Level
@@ -171,6 +258,21 @@ export async function handleCheckoutSessionCompleted(
       stripeCustomerId: session.customer as string,
       userId: user.id,
     });
+
+    // Report affiliate conversion if affiliate ID is present in metadata
+    const affiliateId = metadata.affiliate_id;
+    if (affiliateId) {
+      const amountTotal = session.amount_total || 0; // in cents
+      await reportAffiliateConversion({
+        affiliateId,
+        email: customerEmail,
+        amount: amountTotal / 100, // Convert cents to dollars
+        currency: session.currency || 'usd',
+        plan,
+        stripeSessionId: session.id,
+      });
+      console.log(`Affiliate conversion reported for affiliate ${affiliateId}, session ${session.id}`);
+    }
 
   } catch (error) {
     console.error('Error in handleCheckoutSessionCompleted:', error);

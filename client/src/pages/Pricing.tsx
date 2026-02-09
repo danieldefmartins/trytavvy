@@ -17,6 +17,24 @@ import { Badge } from '../components/ui/badge';
 import { trpc } from '../lib/trpc';
 import { STRIPE_CONFIG } from '../../../shared/stripe-config';
 
+// Helper to get GHL affiliate ID from cookie or URL
+function getAffiliateId(): string | null {
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlAmId = urlParams.get('am_id');
+  if (urlAmId) {
+    localStorage.setItem('tavvy_am_id', urlAmId);
+    return urlAmId;
+  }
+  const storedAmId = localStorage.getItem('tavvy_am_id');
+  if (storedAmId) return storedAmId;
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'am_id' || name === 'affiliate_id') return value;
+  }
+  return null;
+}
+
 export default function PricingPage() {
   const navigate = useNavigate();
   const [billingInterval, setBillingInterval] = useState<'monthly' | 'annual'>('annual');
@@ -48,10 +66,14 @@ export default function PricingPage() {
       }
     }
 
+    // Get affiliate ID for GHL tracking
+    const affiliateId = getAffiliateId() || undefined;
+
     await createCheckout.mutateAsync({
       plan,
       interval: billingInterval,
       couponId,
+      affiliateId,
     });
   };
 

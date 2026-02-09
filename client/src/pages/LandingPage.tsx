@@ -11,6 +11,33 @@ import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Check, X, Loader2, ChevronDown, ChevronUp, Crown } from "lucide-react";
 
+// Helper to get GHL affiliate ID from cookie or URL
+function getAffiliateId(): string | null {
+  // First check URL params (direct affiliate link click)
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlAmId = urlParams.get('am_id');
+  if (urlAmId) {
+    // Store in localStorage as backup
+    localStorage.setItem('tavvy_am_id', urlAmId);
+    return urlAmId;
+  }
+  
+  // Check localStorage (persisted from earlier visit)
+  const storedAmId = localStorage.getItem('tavvy_am_id');
+  if (storedAmId) return storedAmId;
+  
+  // Check GHL affiliate cookie
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'am_id' || name === 'affiliate_id') {
+      return value;
+    }
+  }
+  
+  return null;
+}
+
 // Supabase client for Edge Function calls
 const supabase = createClient(
   "https://scasgwrikoqdwlwlwcff.supabase.co",
@@ -154,12 +181,16 @@ export default function LandingPage() {
     setLoadingPlan(planKey);
     
     try {
+      // Get affiliate ID for tracking
+      const affiliateId = getAffiliateId();
+      
       const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
         body: {
           successUrl: window.location.origin + `/signup?payment=success&plan=${plan}&cycle=${cycle}&session_id={CHECKOUT_SESSION_ID}`,
           cancelUrl: window.location.origin + '/',
           plan: plan,
           cycle: cycle,
+          ...(affiliateId && { affiliateId }),
         },
       });
 
