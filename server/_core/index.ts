@@ -192,7 +192,7 @@ async function startServer() {
   app.use(securityHeaders({
     cspDirectives: {
       'default-src': ["'self'"],
-      'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://link.msgsndr.com'],
       'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       'img-src': ["'self'", 'data:', 'https:', 'blob:'],
       'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
@@ -202,6 +202,7 @@ async function startServer() {
         'wss://*.supabase.co',
         'https://api.stripe.com',
         'https://js.stripe.com',
+        'https://backend.leadconnectorhq.com',
       ],
       'frame-src': ['https://js.stripe.com', 'https://hooks.stripe.com'],
       'frame-ancestors': ["'self'"],
