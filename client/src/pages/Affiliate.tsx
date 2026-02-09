@@ -3,18 +3,21 @@
  * Matches the "Rebellion" design theme from LandingPage
  * 
  * Explains the 20% + 10% two-tier commission structure
- * and redirects to GHL affiliate portal for signup
+ * Custom signup form that creates a GHL contact with affiliate-signup tag
+ * GHL workflow then auto-assigns the contact as an affiliate
  */
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { trpc } from "@/lib/trpc";
 import { 
   DollarSign, Users, TrendingUp, Share2, 
   ChevronDown, ChevronUp, Check, ArrowRight,
-  Smartphone, Star, CreditCard, Gift
+  Smartphone, Star, CreditCard, Gift, Loader2,
+  CheckCircle2, AlertCircle
 } from "lucide-react";
-
-const GHL_AFFILIATE_PORTAL = "https://e7vdyR8r7Cys9twmOQzp.app.clientclub.net/affiliate/signup";
 
 // Products eligible for commission
 const PRODUCTS = [
@@ -113,6 +116,55 @@ const FAQ_ITEMS = [
 export default function Affiliate() {
   const [, navigate] = useLocation();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  
+  // Signup form state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [signupError, setSignupError] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  const affiliateSignup = trpc.ghl.affiliateSignup.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        setSignupSuccess(true);
+        setSignupError(null);
+        // Reset form
+        setFirstName("");
+        setLastName("");
+        setEmail("");
+        setPhone("");
+      } else {
+        setSignupError(data.error || "Something went wrong. Please try again.");
+      }
+    },
+    onError: (error) => {
+      setSignupError(error.message || "Something went wrong. Please try again.");
+    },
+  });
+
+  const handleSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSignupError(null);
+    
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      setSignupError("Please fill in all required fields.");
+      return;
+    }
+
+    affiliateSignup.mutate({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      phone: phone.trim() || undefined,
+    });
+  };
+
+  const scrollToForm = () => {
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-['Inter',sans-serif]">
@@ -136,7 +188,7 @@ export default function Affiliate() {
               Tavvy for Pros
             </Button>
             <Button
-              onClick={() => window.open(GHL_AFFILIATE_PORTAL, '_blank')}
+              onClick={scrollToForm}
               className="bg-[#c8ff00] text-black font-semibold hover:bg-[#b8ef00] px-6"
             >
               Become an Affiliate
@@ -175,7 +227,7 @@ export default function Affiliate() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
             <Button
-              onClick={() => window.open(GHL_AFFILIATE_PORTAL, '_blank')}
+              onClick={scrollToForm}
               size="lg"
               className="bg-[#c8ff00] text-black font-bold text-lg px-8 py-6 hover:bg-[#b8ef00] shadow-[0_0_40px_rgba(200,255,0,0.3)]"
             >
@@ -209,6 +261,144 @@ export default function Affiliate() {
               <div className="text-gray-400 text-sm mt-1">Cost to Join</div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ========== SIGNUP FORM SECTION ========== */}
+      <section id="signup-form" className="py-20 px-4 bg-gradient-to-b from-[#c8ff00]/5 via-[#c8ff00]/[0.02] to-transparent">
+        <div className="max-w-2xl mx-auto" ref={formRef}>
+          <div className="text-center mb-10">
+            <p className="text-[#c8ff00] font-bold text-sm tracking-widest mb-2">JOIN NOW</p>
+            <h2 className="text-4xl md:text-5xl font-bold font-['Space_Grotesk',sans-serif] mb-4">
+              Become an Affiliate
+            </h2>
+            <p className="text-gray-400 text-lg max-w-xl mx-auto">
+              Fill out the form below and we'll set up your affiliate account. You'll receive your unique referral link via email within minutes.
+            </p>
+          </div>
+
+          {signupSuccess ? (
+            <div className="bg-[#c8ff00]/10 border border-[#c8ff00]/30 rounded-2xl p-8 text-center">
+              <CheckCircle2 className="w-16 h-16 text-[#c8ff00] mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-3 font-['Space_Grotesk',sans-serif]">
+                You're In!
+              </h3>
+              <p className="text-gray-300 mb-2">
+                Your affiliate application has been submitted successfully.
+              </p>
+              <p className="text-gray-400 text-sm mb-6">
+                Check your email for your unique affiliate link and dashboard access. 
+                If you don't see it within a few minutes, check your spam folder.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button
+                  onClick={() => setSignupSuccess(false)}
+                  variant="outline"
+                  className="border-[#c8ff00]/30 text-[#c8ff00] hover:bg-[#c8ff00]/10"
+                >
+                  Sign Up Another Person
+                </Button>
+                <Button
+                  onClick={() => navigate("/")}
+                  className="bg-[#c8ff00] text-black font-semibold hover:bg-[#b8ef00]"
+                >
+                  Explore Tavvy for Pros
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSignup} className="bg-white/5 border border-white/10 rounded-2xl p-8 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-gray-300 text-sm font-medium">
+                    First Name <span className="text-[#c8ff00]">*</span>
+                  </Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="John"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#c8ff00]/50 focus:ring-[#c8ff00]/20 h-12"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-gray-300 text-sm font-medium">
+                    Last Name <span className="text-[#c8ff00]">*</span>
+                  </Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Doe"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#c8ff00]/50 focus:ring-[#c8ff00]/20 h-12"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-gray-300 text-sm font-medium">
+                  Email Address <span className="text-[#c8ff00]">*</span>
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="john@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#c8ff00]/50 focus:ring-[#c8ff00]/20 h-12"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-gray-300 text-sm font-medium">
+                  Phone Number <span className="text-gray-500">(optional)</span>
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+1 (555) 000-0000"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#c8ff00]/50 focus:ring-[#c8ff00]/20 h-12"
+                />
+              </div>
+
+              {signupError && (
+                <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-red-300 text-sm">{signupError}</p>
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={affiliateSignup.isPending}
+                className="w-full bg-[#c8ff00] text-black font-bold text-lg h-14 hover:bg-[#b8ef00] shadow-[0_0_30px_rgba(200,255,0,0.2)] disabled:opacity-50"
+              >
+                {affiliateSignup.isPending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Setting Up Your Account...
+                  </>
+                ) : (
+                  <>
+                    Join the Affiliate Program
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </>
+                )}
+              </Button>
+
+              <p className="text-gray-500 text-xs text-center">
+                By signing up, you agree to the Tavvy Affiliate Program terms. 
+                No fees, cancel anytime.
+              </p>
+            </form>
+          )}
         </div>
       </section>
 
@@ -272,20 +462,20 @@ export default function Affiliate() {
           {/* Earnings Scenario */}
           <div className="mt-12 bg-gradient-to-r from-[#c8ff00]/10 via-[#c8ff00]/5 to-[#c8ff00]/10 border border-[#c8ff00]/20 rounded-2xl p-8 max-w-4xl mx-auto">
             <h3 className="text-xl font-bold mb-4 text-center font-['Space_Grotesk',sans-serif]">
-              💰 Real Earning Scenario
+              Real Earning Scenario
             </h3>
             <div className="grid md:grid-cols-3 gap-6 text-center">
               <div>
                 <p className="text-gray-400 text-sm mb-2">Your Direct Sales</p>
                 <p className="text-white font-semibold">5 Tavvy Pro Annual plans</p>
                 <p className="text-[#c8ff00] text-2xl font-bold font-['Space_Grotesk',sans-serif] mt-1">$599.00</p>
-                <p className="text-gray-500 text-xs mt-1">5 × $599 × 20%</p>
+                <p className="text-gray-500 text-xs mt-1">5 x $599 x 20%</p>
               </div>
               <div className="md:border-x border-white/10">
                 <p className="text-gray-400 text-sm mb-2">Sub-Affiliate Sales</p>
-                <p className="text-white font-semibold">3 affiliates × 4 sales each</p>
+                <p className="text-white font-semibold">3 affiliates x 4 sales each</p>
                 <p className="text-[#c8ff00] text-2xl font-bold font-['Space_Grotesk',sans-serif] mt-1">$719.40</p>
-                <p className="text-gray-500 text-xs mt-1">12 × $599 × 10%</p>
+                <p className="text-gray-500 text-xs mt-1">12 x $599 x 10%</p>
               </div>
               <div>
                 <p className="text-gray-400 text-sm mb-2">Total Earnings</p>
@@ -469,7 +659,7 @@ export default function Affiliate() {
                 Join the Tavvy Affiliate Program today. It's free, takes 2 minutes, and you could be earning commissions by tomorrow.
               </p>
               <Button
-                onClick={() => window.open(GHL_AFFILIATE_PORTAL, '_blank')}
+                onClick={scrollToForm}
                 size="lg"
                 className="bg-[#c8ff00] text-black font-bold text-lg px-10 py-6 hover:bg-[#b8ef00] shadow-[0_0_40px_rgba(200,255,0,0.3)]"
               >
@@ -512,7 +702,7 @@ export default function Affiliate() {
               <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
               <a href="mailto:support@tavvy.com" className="hover:text-white transition-colors">Contact</a>
             </div>
-            <p className="text-gray-500 text-sm">© 2026 Tavvy. All rights reserved.</p>
+            <p className="text-gray-500 text-sm">&copy; 2026 Tavvy. All rights reserved.</p>
           </div>
         </div>
       </footer>

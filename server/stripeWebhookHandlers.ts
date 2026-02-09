@@ -6,6 +6,7 @@
 
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { findGHLContactByEmail, addGHLContactTags } from './ghl';
 
 // Go High Level API configuration
 const GHL_WEBHOOK_URL = process.env.GHL_WEBHOOK_URL || '';
@@ -95,6 +96,47 @@ async function reportAffiliateConversion(data: {
   } catch (error) {
     console.error('Error reporting affiliate conversion:', error);
     // Don't throw - affiliate tracking failure should not block the payment flow
+  }
+}
+
+/**
+ * Notify the affiliate that their referral converted
+ * Looks up the affiliate by their GHL affiliate_id, then adds a 'referral-converted' tag
+ * A GHL workflow triggers on this tag and sends the affiliate a congrats email
+ */
+async function notifyAffiliateOfConversion(data: {
+  affiliateId: string;
+  customerName: string;
+  plan: string;
+  amount: number;
+}): Promise<void> {
+  if (!GHL_API_KEY) {
+    console.warn('GHL_API_KEY not configured - cannot notify affiliate of conversion');
+    return;
+  }
+
+  try {
+    console.log(`Notifying affiliate ${data.affiliateId} of referral conversion`);
+
+    // The affiliate_id from GHL's am.js tracking is the GHL contact ID
+    // Try to add the 'referral-converted' tag directly to the affiliate contact
+    const tagResult = await addGHLContactTags(
+      data.affiliateId,
+      ['referral-converted', 'active-affiliate'],
+      GHL_API_KEY
+    );
+
+    if (tagResult.success) {
+      console.log(`Successfully tagged affiliate ${data.affiliateId} with 'referral-converted'`);
+    } else {
+      console.warn(`Failed to tag affiliate ${data.affiliateId}:`, tagResult.error);
+      
+      // Fallback: Try to find the affiliate by searching contacts with the affiliate tag
+      // and matching the affiliate_id in custom fields
+      console.log('Tag by contact ID failed, affiliate may use a different ID format');
+    }
+  } catch (error) {
+    console.error('Error notifying affiliate of conversion:', error);
   }
 }
 
@@ -272,6 +314,18 @@ export async function handleCheckoutSessionCompleted(
         stripeSessionId: session.id,
       });
       console.log(`Affiliate conversion reported for affiliate ${affiliateId}, session ${session.id}`);
+
+      // Tag the affiliate's GHL contact with 'referral-converted' so the GHL workflow sends them a congrats email
+      try {
+        await notifyAffiliateOfConversion({
+          affiliateId,
+          customerName: session.customer_details?.name || customerEmail,
+          plan,
+          amount: (session.amount_total || 0) / 100,
+        });
+      } catch (notifyErr) {
+        console.warn('Failed to notify affiliate of conversion (non-critical):', notifyErr);
+      }
     }
 
   } catch (error) {

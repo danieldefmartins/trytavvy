@@ -20,7 +20,7 @@ import {
 import { getDb } from "./db";
 import { repActivityLog, batchImportJobs } from "../drizzle/schema";
 import { eq, desc } from "drizzle-orm";
-import { syncProToGHL } from "./ghl";
+import { syncProToGHL, createGHLContact, findGHLContactByEmail, addGHLContactTags } from "./ghl";
 import {
   signInWithEmail,
   verifySupabaseToken,
@@ -385,6 +385,67 @@ export const appRouter = router({
 
         const result = await syncProToGHL(input, apiKey, locationId);
         return result;
+      }),
+    // Affiliate signup - creates contact in GHL with affiliate-signup tag
+    affiliateSignup: publicProcedure
+      .input(
+        z.object({
+          firstName: z.string().min(1),
+          lastName: z.string().min(1),
+          email: z.string().email(),
+          phone: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const apiKey = process.env.GHL_API_KEY;
+        const locationId = process.env.GHL_LOCATION_ID;
+        if (!apiKey || !locationId) {
+          console.warn("GHL credentials not configured");
+          return { success: false, error: "GHL not configured" };
+        }
+        try {
+          // Check if contact already exists
+          const existing = await findGHLContactByEmail(input.email, apiKey, locationId);
+          if (existing.found && existing.contactId) {
+            // Add affiliate tag to existing contact
+            await addGHLContactTags(
+              existing.contactId,
+              ['affiliate-signup', 'Tavvy Affiliate'],
+              apiKey
+            );
+            return { 
+              success: true, 
+              contactId: existing.contactId,
+              message: 'Affiliate signup submitted successfully' 
+            };
+          }
+          // Create new contact with affiliate tags
+          const result = await createGHLContact(
+            {
+              firstName: input.firstName,
+              lastName: input.lastName,
+              email: input.email,
+              phone: input.phone,
+              tags: ['affiliate-signup', 'Tavvy Affiliate', 'New Affiliate'],
+            },
+            apiKey,
+            locationId
+          );
+          return {
+            success: result.success,
+            contactId: result.contactId,
+            message: result.success 
+              ? 'Affiliate signup submitted successfully' 
+              : 'Signup failed, please try again',
+            error: result.error,
+          };
+        } catch (error) {
+          console.error('Affiliate signup error:', error);
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          };
+        }
       }),
   }),
 
