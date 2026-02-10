@@ -721,7 +721,9 @@ export default function LandingPage() {
               />
               <span className="text-gray-400 text-sm italic">The savvy way to discover.</span>
             </div>
-            <div className="flex gap-6 text-gray-400 text-sm">
+            <div className="flex flex-wrap justify-center gap-6 text-gray-400 text-sm">
+              <a href="https://tavvy.com" target="_blank" rel="noopener noreferrer" className="hover:text-[#c8ff00] transition-colors">Visit Tavvy</a>
+              <a href="/affiliate" className="hover:text-[#c8ff00] transition-colors">Become an Affiliate</a>
               <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
               <a href="mailto:support@tavvy.com" className="hover:text-white transition-colors">Contact</a>
