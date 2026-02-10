@@ -180,13 +180,6 @@ export default function Affiliate() {
             <span className="hidden lg:block text-gray-400 text-sm italic border-l border-white/20 pl-3">The savvy way to discover.</span>
           </div>
           <div className="flex items-center gap-4">
-            <Button
-              onClick={() => navigate("/")}
-              variant="ghost"
-              className="text-gray-400 hover:text-white"
-            >
-              Tavvy for Pros
-            </Button>
             <a
               href="https://e7vdyr8r7cys9twmoqzp.app.clientclub.net/login"
               target="_blank"
@@ -202,7 +195,7 @@ export default function Affiliate() {
             </a>
             <Button
               onClick={scrollToForm}
-              className="bg-[#c8ff00] text-black font-semibold hover:bg-[#b8ef00] px-6"
+              className="hidden sm:inline-flex bg-[#c8ff00] text-black font-semibold hover:bg-[#b8ef00] px-6"
             >
               Become an Affiliate
             </Button>
