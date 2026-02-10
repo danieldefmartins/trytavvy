@@ -16,7 +16,7 @@ import {
   DollarSign, Users, TrendingUp, Share2, 
   ChevronDown, ChevronUp, Check, ArrowRight,
   Smartphone, Star, CreditCard, Gift, Loader2,
-  CheckCircle2, AlertCircle
+  CheckCircle2, AlertCircle, ExternalLink
 } from "lucide-react";
 
 // Products eligible for commission
@@ -187,6 +187,19 @@ export default function Affiliate() {
             >
               Tavvy for Pros
             </Button>
+            <a
+              href="https://e7vdyr8r7cys9twmoqzp.app.clientclub.net/login"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                variant="outline"
+                className="border-[#c8ff00]/40 text-[#c8ff00] hover:bg-[#c8ff00]/10 px-5"
+              >
+                Affiliate Dashboard
+                <ExternalLink className="ml-2 w-4 h-4" />
+              </Button>
+            </a>
             <Button
               onClick={scrollToForm}
               className="bg-[#c8ff00] text-black font-semibold hover:bg-[#b8ef00] px-6"
